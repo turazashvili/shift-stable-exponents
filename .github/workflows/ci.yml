@@ -25,12 +25,36 @@ jobs:
       - name: Build
         run: lake build
 
-      - name: Check no theorem depends on sorryAx
+      - name: Enforce the exact axiom whitelist
+        # Stronger than grepping for sorryAx: every audited declaration must depend on
+        # EXACTLY Mathlib's three standard axioms. This also fails if a declaration is
+        # silently dropped from test/Axioms.lean, or if a future custom axiom, or a
+        # tactic such as native_decide, adds anything to the list.
         run: |
+          set -euo pipefail
+          expected='[propext, Classical.choice, Quot.sound]'
           out=$(lake env lean test/Axioms.lean)
           echo "$out"
-          if echo "$out" | grep -q "sorryAx"; then
-            echo "::error::a theorem depends on sorryAx"
+
+          if echo "$out" | grep -q 'sorryAx'; then
+            echo "::error::a declaration depends on sorryAx"
+            exit 1
+          fi
+
+          # every reported axiom set must be exactly the whitelist
+          bad=$(echo "$out" | grep 'depends on axioms' | grep -vF "$expected" || true)
+          if [ -n "$bad" ]; then
+            echo "::error::a declaration depends on axioms outside the whitelist"
+            echo "$bad"
+            exit 1
+          fi
+
+          # the number of reported lines must match the number of directives
+          want=$(grep -c '^#print axioms' test/Axioms.lean)
+          got=$(echo "$out" | grep -c 'depends on axioms' || true)
+          echo "audited declarations: $got (expected $want)"
+          if [ "$got" -ne "$want" ]; then
+            echo "::error::expected $want audited declarations, got $got"
             exit 1
           fi
 
@@ -48,7 +72,6 @@ jobs:
           python3 verification/check_paper_claims.py
           python3 verification/check_not_bala_form.py
           python3 verification/probe_localization.py
-          python3 verification/test_unified.py
       - name: Hostile (n,k) sweep
         # A reduced bound, to keep CI fast. The 646,400-pair figure quoted in the
         # paper and README is produced by:  sweep_congruence.py 100 8
@@ -65,6 +88,10 @@ jobs:
         run: git clone --depth 1 https://github.com/oeis/oeisdata.git
       - name: Check the Lean definitions against the real OEIS terms
         run: python3 verification/check_faithful.py
+      - name: The unified statement, incl. its OEIS term comparison
+        # This lives here, not in `numerics`, because it compares against the stored
+        # OEIS terms and now fails if the dump is absent rather than skipping silently.
+        run: python3 verification/test_unified.py
 
   paper:
     runs-on: ubuntu-latest

@@ -70,7 +70,9 @@ That is the hypothesis on the exponents, stated with no escape hatches.
 ## Level 1 — Run the numerics (5 minutes, Python 3 only, no dependencies)
 
 These are independent of Lean and use exact integer/rational arithmetic — never floating
-point, so an agreement is an identity, not an approximation.
+point. An agreement is therefore exact over the range tested: not an approximation, but
+not a proof of an identity beyond that range either. Each script exits non-zero if a
+required check fails, so a green run means something.
 
 ```bash
 python3 verification/verify_proof.py
@@ -95,8 +97,11 @@ points with $F_0G_0=1$, and — importantly — that $F_0G_0=1$ is **not suffici
 > is the necessary condition in that slice, and the $(-1,-1)$ branch is a nonempty
 > infinite family. A later version then over-corrected, claiming $F(0)G(0)=1$ could simply
 > *replace* $F(0)=G(0)=1$ — i.e. that it was sufficient. That is also false: sufficiency
-> on the $(-1,-1)$ branch needs $-F$ and $-G$ to be **even**, and fails as soon as an odd
-> term appears ($F=-1+x$, $G=-1$ gives $b(4)-b(1)=-17\not\equiv0 \bmod 3$). The flawed
+> on the $(-1,-1)$ branch needs $-F$ and $-G$ to be **even**. Evenness is a real
+> constraint, not a convenience — in every case with an odd term that we tested (625
+> scanned) the congruence failed, e.g. $F=-1+x$, $G=-1$ gives
+> $b(4)-b(1)=-17\not\equiv0 \bmod 3$ — though we have not proved that *every* odd term
+> forces failure. The flawed
 > test block inside `verify_proof.py` has been left in place and clearly labelled as
 > flawed rather than deleted, so you can see what it actually measured. See
 > `docs/RESEARCH-LOG.md` and Section 6.2 of the paper.
@@ -207,10 +212,12 @@ appear.
 
 **4b. Check the hypotheses are load-bearing, not decorative.** Weaken one and confirm the
 proof breaks. For example, in `term_shift`/`dvd_Tint_sub` the constraint `r ≤ i` is
-essential; drop it and the arithmetic claim becomes false. Independent review found 2637
-counterexamples to the termwise statement with `r ≤ i` removed. You can reproduce that
-kind of check quickly in Python with the transcriptions in
-`verification/check_faithful.py`.
+essential: without it there is no guarantee that `r!` divides `(n)_i`, so the binomial
+denominators are not absorbed. `verify_proof.py` checks this directly — STEP 5 confirms
+the termwise claim holds on 46,200 cases with `r ≤ i`, and STEP 5b re-runs the same
+statement over the same `(k, i, n)` ranges with the constraint removed and reports
+**11,509 violations out of 117,600 cases**. Both figures are printed by the script, so you
+can confirm them rather than take them on trust.
 
 **4c. Hunt for a counterexample to the theorem itself.** Use exact integers, never floats.
 `python3 verification/sweep_congruence.py 100 8` searches 646,400 pairs $(n,k)$ with
@@ -227,8 +234,11 @@ were wrong, the corollary would prove something weaker than advertised.
 
 **4e. Evaluate the definitions inside Lean.** Rather than trusting the Python
 transcription, you can make Lean compute `Bint` on concrete inputs with `#eval` and check
-the output against OEIS bytes directly. Independent review did this and matched all four
-sequences to nine terms.
+the output against OEIS bytes directly. This is the strongest form of the faithfulness
+check, because it removes the transcription step entirely. The reproducible equivalent
+shipped in this repository is `verification/check_faithful.py`, which transcribes the Lean
+definitions verbatim — including `Nat` truncated subtraction — and compares against the
+stored OEIS terms for all four sequences.
 
 ---
 

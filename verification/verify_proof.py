@@ -285,6 +285,36 @@ def main():
 
     print()
     print("=" * 80)
+    print("STEP 5b - the r <= i constraint is load-bearing, not decorative")
+    print("=" * 80)
+    # Same statement as STEP 5 over the same (k, i, n) ranges, but with r and s allowed
+    # to exceed i. The arithmetic claim must then FAIL: without r <= i there is no
+    # guarantee that r! divides (n)_i, so the binomial denominators are not absorbed.
+    # This is the check behind the claim in REVIEWING.md that the hypothesis is
+    # essential; the count below is what this range actually produces.
+    bad_nc = 0
+    tested_nc = 0
+    RMAX = 12
+    for k in range(1, 16):
+        for i in range(0, 10):
+            for r in range(0, RMAX):
+                for s in range(0, RMAX - r):
+                    if r <= i and s <= i - r:
+                        continue          # that is STEP 5, already checked
+                    for n in range(i, i + 14):
+                        X, Xp = falling(n, i), falling(n + k, i)
+                        Y, Yp = comb(n, r), comb(n + k, r)
+                        Z = comb(n * (n - i), s)
+                        Zp = comb((n + k) * (n + k - i), s)
+                        tested_nc += 1
+                        if (Xp * Yp * Zp - X * Y * Z) % k != 0:
+                            bad_nc += 1
+    print(f"  with r <= i REMOVED             tested {tested_nc}   violations: {bad_nc}")
+    print("  (violations here are the point: the constraint cannot be dropped)")
+    must("dropping r <= i breaks the termwise claim", bad_nc > 0)
+
+    print()
+    print("=" * 80)
     print("CONCLUSION - full congruence on the three OEIS targets + random F,G")
     print("=" * 80)
     inv = as_series([1] * (DEG + 1), DEG)

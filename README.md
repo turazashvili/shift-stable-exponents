@@ -87,7 +87,15 @@ docs/                         research log, instance triage
 | `ShiftStable` | the hypothesis on exponents, with closure under `+` and `*` |
 | `Bint_shift` | the congruence for the explicit sum |
 | `bala_congruence` | **main theorem**, end to end |
-| `bala_congruence_A361036`, `bala_congruence_A278070`, `bala_congruence_sq` | named corollaries |
+| `bala_congruence_A361036` | $A(n)=M(n)=n$ — A361036, general form |
+| `bala_congruence_A278070` | $A(n)=n$, $M(n)=1$ — A278070, general form |
+| `bala_congruence_A361281` | $A(n)=0$, $M(n)=n$, $W$ unconstrained — A361281, general form |
+| `bala_congruence_A293013` | as above with $G=1/(1-x)$ — A293013 |
+| `bala_congruence_sq` | $A(n)=n^2$, $M(n)=n$ — not previously posed |
+
+These nine declarations are exactly the ones audited by `test/Axioms.lean`; CI enforces
+that each depends on precisely `[propext, Classical.choice, Quot.sound]` and fails if any
+declaration is dropped or any other axiom appears.
 
 Nothing is assumed: `bala` is defined from Mathlib's `exp` and `subst`, and every step
 from that definition to the congruence is machine-checked.

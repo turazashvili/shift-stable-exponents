@@ -1,24 +1,49 @@
 /-
-END-TO-END verification of Peter Bala's 2023 congruence conjecture.
+Congruences for exponential generating functions with shift-stable exponents,
+verified end to end.
 
-This file formalizes the
-generating-function bridge, so that the final theorem is stated directly about
+This file formalizes the generating-function bridge, so that the final theorem is stated
+directly about
 
-    bala F G n = n ! * [xⁿ] ( Fⁿ * exp (x * Gⁿ) )
+    bala W F G A M n = n ! * [xⁿ]( W * F ^ A n * subst (X * G ^ M n) (exp ℚ) )
 
-with hypotheses on `F` and `G`, rather than about an abstract combinatorial sum.
+with hypotheses on `F` and `G` and *no condition on the prefactor* `W`, rather than about
+an abstract combinatorial sum.
 
-CONJECTURE (Peter Bala, OEIS A361036, 13 Mar 2023): for `F, G ∈ ℤ[[x]]` with
-`F(0) = G(0) = 1`, `bala F G (n+k) ≡ bala F G n (mod k)`.
+THEOREM (`bala_congruence`). Let `W, F, G ∈ ℤ[[x]]` with `F(0) = G(0) = 1`, and let
+`A, M : ℕ → ℕ` be shift-stable, meaning `k ∣ A (m+k) - A m` for all `m, k` (every
+polynomial with ℕ coefficients qualifies). Then `bala W F G A M n` is an integer and
+
+    bala W F G A M (n + k) ≡ bala W F G A M n   (mod k)
+
+for all `n k : ℕ`.
+
+This resolves conjectures of Peter Bala recorded in the OEIS in March 2023. The named
+corollaries below are verbatim instances:
+
+  `bala_congruence_A361036`   A n = M n = n            (A361036, general form)
+  `bala_congruence_A278070`   A n = n, M n = 1         (A278070, general form)
+  `bala_congruence_A361281`   A n = 0, M n = n, W free (A361281, general form)
+  `bala_congruence_A293013`   as above with G = 1/(1-x) (A293013)
+  `bala_congruence_sq`        A n = n², M n = n        (not previously posed)
+
+The unconstrained `W` is what makes A361281 an instance: the OEIS statement there places
+no condition on its prefactor's constant term.
 
 STRUCTURE
   §1  `bala` defined literally from `PowerSeries.exp` and `PowerSeries.subst`.
-  §2  BRIDGE: `bala = Bint`, an explicit integer sum. (The former gap.)
-  §3  Newton expansion of `coeff i (F^A * G^B)` into binomials in `A` and `B`.
-  §4  The arithmetic core.
-  §5  END-TO-END: `bala` is an integer and satisfies the congruence.
+  §2  BRIDGE: `bala = Bint`, an explicit integer sum.
+  §3  Arithmetic helpers.
+  §4  Newton expansion of `coeff i (F^A * G^B)` into binomials in `A` and `B`.
+  §5  The arithmetic core, then END TO END: `bala` is an integer and satisfies the
+      congruence.
 
-No `sorry`.
+No `sorry`. `test/Axioms.lean` audits nine declarations; each must depend on exactly
+`[propext, Classical.choice, Quot.sound]`, and CI enforces that whitelist.
+
+Scope: the sharpness analysis, the non-Bala-form proposition and the localization results
+in the accompanying paper are hand proofs supported by the exact-arithmetic checks in
+`verification/`; they are not formalized here.
 -/
 import Mathlib
 

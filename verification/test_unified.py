@@ -136,6 +136,25 @@ def oeis(anum, root="oeisdata"):
     return [int(t) for t in raw.split(",") if t.strip()]
 
 
+# --- regression tracking -------------------------------------------------
+# Checks recorded with must() MUST hold; checks recorded with must_fail() are
+# deliberate controls that MUST fail. The script exits non-zero if either kind
+# goes the wrong way, so CI detects a mathematical regression, not just a crash.
+REGRESSIONS = []
+
+
+def must(label, ok):
+    if not ok:
+        REGRESSIONS.append(f"expected to hold, but failed: {label}")
+    return ok
+
+
+def must_fail(label, failed):
+    if not failed:
+        REGRESSIONS.append(f"expected to FAIL, but held: {label}")
+    return failed
+
+
 def main():
     DEG, N = 24, 22
     one = ser([1], DEG)
@@ -152,6 +171,12 @@ def main():
     print(f"  OEIS A278070 = {oe[:9] if oe else 'not found'}")
     print(f"  match: {a278[:m] == oe[:m] if oe else 'n/a'}")
     print(f"  congruence violations: {len(viol(a278))}")
+    if oe:
+        must("A278070 reproduces the stored OEIS terms", a278[:m] == oe[:m])
+    else:
+        print("  NOTE: OEIS dump not found -- term comparison SKIPPED")
+        REGRESSIONS.append("OEIS dump missing: A278070 term comparison could not run")
+    must("A278070 congruence", len(viol(a278)) == 0)
 
     print()
     print("=" * 78)
@@ -177,6 +202,7 @@ def main():
         agree = (d1 == d2)
         okall &= agree
         print(f"  {label:46s} expansion agrees: {agree}")
+        must(f"expansion agrees for {label.strip()}", agree)
     print(f"\n  expansion valid on all: {okall}")
 
     print()
@@ -198,6 +224,7 @@ def main():
                 bad += 1
                 fails += 1
         print(f"  {label:46s} {25 - bad:2d}/25 hold" + ("" if not bad else "   <-- FAILURES"))
+        must(f"congruence holds for {label.strip()}", bad == 0)
     print(f"\n  overall: {total - fails}/{total} hold")
 
     print()
@@ -220,6 +247,7 @@ def main():
             if viol(a):
                 nb += 1
         print(f"  {label:32s} {nb}/6 FAIL  (expected: most, if polynomiality matters)")
+        must_fail(f"non-shift-stable control {label.strip()}", nb > 0)
 
     print()
     print("=" * 78)
@@ -233,7 +261,18 @@ def main():
         print(f"  {label}")
         print(f"      b(0..6) = {a[:7]}")
         print(f"      violations for all n,k with n+k<=40: {len(viol(a, 20))}")
+        must(f"higher-range congruence: {label}", len(viol(a, 20)) == 0)
 
 
 if __name__ == "__main__":
     main()
+    if REGRESSIONS:
+        print()
+        print("=" * 78)
+        print(f"REGRESSION: {len(REGRESSIONS)} check(s) went the wrong way")
+        for r in REGRESSIONS:
+            print(f"  - {r}")
+        print("=" * 78)
+        raise SystemExit(1)
+    print()
+    print("All required checks passed; all controls failed as intended.")

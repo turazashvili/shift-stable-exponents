@@ -1,5 +1,26 @@
 # OEIS conjecture-mining pipeline — state and findings
 
+> ## Read this first — CURRENT STATUS
+>
+> **This file is a research log, kept in chronological order. Entries below record what
+> was believed at the time they were written, including several things later found to be
+> wrong.** It is not a description of the current state of the work, and it is not
+> maintained as one. Where a claim has been retracted, a dated correction note appears
+> next to it rather than the original being edited away.
+>
+> For the current state, use:
+>
+> | | |
+> |---|---|
+> | the result | `paper/paper.tex`, and the [v1.1 release](https://github.com/turazashvili/shift-stable-exponents/releases/tag/v1.1) |
+> | the formalization | `ShiftStableExponents/Basic.lean` — **nine** declarations audited by `test/Axioms.lean` |
+> | how to check it | `REVIEWING.md` |
+> | the numerics | `verification/README.md` |
+>
+> The theorem now carries an unconstrained prefactor `W` and is stated for `n ≥ 0`,
+> `k ≥ 1`. Files named in older entries (`BalaEndToEnd.lean`, `BalaCongruence.lean`) no
+> longer exist; the development is a single file, `ShiftStableExponents/Basic.lean`.
+
 Working dir: `/home/niko/sandbox/math_problems`
 
 ## Why OEIS (the strategic premise)
@@ -84,6 +105,15 @@ with extra generality from the prefactor `F`. Fully subsumed, 8 years stale.
 Caught before any Lean was written — cost ~15 minutes.
 
 ## RESULT (UPGRADED): a single theorem covering BOTH open axes, verified end to end
+
+> **SUPERSEDED — kept as written.** This section was accurate when written but has since
+> been overtaken. What changed: the theorem now carries an unconstrained prefactor `W`
+> (which is what makes A361281 an instance); `BalaEndToEnd.lean` was consolidated into
+> `ShiftStableExponents/Basic.lean`; the corollary list gained
+> `bala_congruence_A361281` and `bala_congruence_A293013`; and `#print axioms` now audits
+> **nine** declarations, not six. The index range is `n ≥ 0`, `k ≥ 1`. The sharpness
+> summary below also predates two corrections — see the notes further down and §6.2 of the
+> paper. Current statement: `bala_congruence` in `ShiftStableExponents/Basic.lean`.
 
 The technique generalized further than the original target. Instead of one conjecture,
 `BalaEndToEnd.lean` now proves a **unified theorem with arbitrary shift-stable exponents**:
@@ -230,7 +260,10 @@ subtraction, and finds:
 Plus, from `verify_proof.py`: the heart of the proof, termwise shift-stability,
 tested on **46,200** cases with 0 violations. Independent hostile review reported
 `(n,k)` sweeps with 0 violations, confirms the hypotheses
-are load-bearing (dropping `r ≤ i` produces 2637 counterexamples to `term_shift`),
+are load-bearing (dropping `r ≤ i` breaks `term_shift`; the reproducible figure is now
+STEP 5b of `verify_proof.py`, which reports 11,509 violations out of 117,600 cases over a
+documented range — the 2637 quoted here was from an external run and could not be
+reproduced from this repository),
 and — a stronger faithfulness check than mine — made **Lean itself `#eval` its own
 `T`/`B`**, matching the OEIS `%S/%T/%U` bytes verbatim for all three sequences.
 
@@ -296,12 +329,27 @@ number of summands grows with `n`, the exponent `n(n-i)` is quadratic in `n`, an
 `[xⁱ]H^N` is only integer-*valued* in `n`, not integer-coefficient; CGG's closure
 properties are for finitely many fixed operations.)
 
-Bounding the folklore risk: the two literatures are **provably disconnected**. OEIS
+Bounding the folklore risk: the two literatures appear **disconnected**. OEIS
 full-text has zero hits for "integral difference ratio"; CGG's paper has zero
 occurrences of `OEIS`, `Bala`, `exp(x`, `G(x)`, or "exponential generating"; and all 15
 of CGG's citations are theoretical CS / universal algebra, none applying it to a
 generating-function-defined sequence. CGG's theorem also already answers the open
 Question at the end of Bala's 2017 note — nobody noticed.
+
+> **CORRECTION (Aug 22 2026).** Two claims in the paragraph above were wrong and have been
+> fixed in the paper.
+>
+> 1. **"provably disconnected"** overstates the evidence. Absence of hits in a full-text
+>    search is evidence of disconnection, not proof of it. The paper now says only that no
+>    connection was found.
+> 2. **"CGG's theorem also already answers the open Question"** is false. CGG characterize
+>    the *ambient* class of sequences with integral difference ratios; they make no
+>    comparison between that class and Bala's subclass of sequences whose e.g.f. factors as
+>    `F(x)·exp(x·G(x))`. Answering Bala's question requires exhibiting a sequence in the
+>    former that is not in the latter, which CGG never do. That gap is closed by the
+>    obstruction now in §7.3 of the paper: if `B = F̂·exp(x·Ĝ)` with `F̂, Ĝ ∈ ℤ[[x]]` then
+>    `B'/B ∈ ℤ[[x]]`, whereas A293013 has `[x^6](B'/B) = 117271/3`. See
+>    `verification/check_not_bala_form.py`.
 
 ### Web search (BrowserOS neo, 21 Aug 2026) — the check both subagents were blocked from
 
