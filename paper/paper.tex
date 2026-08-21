@@ -279,8 +279,10 @@ Both exponents move by a multiple of $k$. Indeed $k\mid a'-a$ because $A$ is
 shift-stable; and since $i\le n$ we have $n+k-i=(n-i)+k$, so
 $k\mid (n+k-i)-(n-i)$, while $k\mid M(n+k)-M(n)$, whence
 \[
-  b'-b=M(n{+}k)(n{+}k{-}i)-M(n)(n{-}i)
-      =\big(M(n{+}k)-M(n)\big)(n{+}k{-}i)+M(n)\big((n{+}k{-}i)-(n{-}i)\big)
+\begin{aligned}
+  b'-b &= M(n{+}k)(n{+}k{-}i)-M(n)(n{-}i)\\
+       &= \big(M(n{+}k)-M(n)\big)(n{+}k{-}i)+M(n)\big((n{+}k{-}i)-(n{-}i)\big)
+\end{aligned}
 \]
 is divisible by $k$.
 
@@ -327,7 +329,10 @@ prefactor $W$ can be carried along at no cost: it is absorbed into $Z$ in
 
 \begin{corollary}[\oeis{A361036}]\label{cor:A361036}
 Let $F,G\in\Z[[x]]$ with $F(0)=G(0)=1$. Then
-$b(n)=n!\coeff{n}\big(F^{n}\exp(xG^{n})\big)$ satisfies \eqref{eq:scp}.
+\[
+  b(n)=n!\,\coeff{n}\big(F^{n}\exp(xG^{n})\big)
+\]
+satisfies \eqref{eq:scp}.
 \end{corollary}
 \begin{proof}
 \Cref{thm:main} with $W=1$, $A(n)=M(n)=n$, shift-stable by \Cref{lem:ssclosure}.
@@ -357,8 +362,11 @@ $M(n)=n$, or $M(n)=\sigma(n)$ for any shift-stable arithmetic function.
 
 \begin{example}
 For \oeis{A361036} itself, $F=G=1+x$, the sequence begins
-$1, 2, 11, 124, 2225, 56546, 1928707, 85029596, 4687436609$. Modulo $7$ it is
-$1,2,4,5,6,0,4,1,2,\dots$, of period $7$, as \eqref{eq:scp} requires.
+\[
+  1,\; 2,\; 11,\; 124,\; 2225,\; 56546,\; 1928707,\; 85029596,\; 4687436609,
+\]
+and modulo $7$ it is $1,2,4,5,6,0,4,1,2,\dots$, of period $7$, as
+\eqref{eq:scp} requires.
 \end{example}
 
 \section{Sharpness}\label{sec:sharp}
@@ -470,9 +478,11 @@ rather than a combinatorial reformulation. The chain consists of:
   \item \texttt{coeff\_one\_add\_pow\_mul}: \Cref{lem:newton};
   \item \texttt{ShiftStable} with closure lemmas: \Cref{def:ss}, \Cref{lem:ssclosure};
   \item \texttt{Bint\_shift}: \eqref{eq:blockwise} summed;
-  \item \texttt{bala\_congruence}: \Cref{thm:main}; and named corollaries
-        \texttt{bala\_congruence\_A361036}, \texttt{\_A278070}, \texttt{\_A361281},
-        \texttt{\_A293013}.
+  \item \texttt{bala\_congruence}: \Cref{thm:main}; and the named corollaries
+        \texttt{bala\_congruence\_A361036},
+        \texttt{bala\_congruence\_A278070},
+        \texttt{bala\_congruence\_A361281} and
+        \texttt{bala\_congruence\_A293013}.
 \end{itemize}
 For each of these, \texttt{\#print axioms} reports
 \texttt{[propext, Classical.choice, Quot.sound]} --- Mathlib's three standard axioms ---

@@ -57,3 +57,42 @@ jobs:
         run: git clone --depth 1 https://github.com/oeis/oeisdata.git
       - name: Check the Lean definitions against the real OEIS terms
         run: python3 verification/check_faithful.py
+
+  paper:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install TinyTeX
+        run: |
+          curl -sSfL https://yihui.org/tinytex/install-bin-unix.sh | sh
+          echo "$HOME/.TinyTeX/bin/x86_64-linux" >> "$GITHUB_PATH"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Install the LaTeX packages the paper needs
+        run: |
+          tlmgr install amsmath amscls mathtools geometry microtype booktabs \
+            enumitem hyperref cleveref latex-bin lm ec cm-super url oberdiek \
+            etoolbox refcount gettitlestring kvoptions pdftexcmds infwarerr \
+            ltxcmds epstopdf-pkg
+
+      - name: Build the paper
+        run: |
+          cd paper
+          pdflatex -interaction=nonstopmode -halt-on-error paper.tex
+          pdflatex -interaction=nonstopmode paper.tex
+          pdflatex -interaction=nonstopmode paper.tex
+          test -f paper.pdf
+
+      - name: Fail on undefined references
+        run: |
+          if grep -qi "undefined" paper/paper.log; then
+            echo "::error::the paper has undefined references or citations"
+            grep -i undefined paper/paper.log
+            exit 1
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: paper-pdf
+          path: paper/paper.pdf

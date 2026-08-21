@@ -90,6 +90,18 @@ from that definition to the congruence is machine-checked.
 
 ---
 
+## The paper
+
+The LaTeX source is [`paper/paper.tex`](paper/paper.tex). A built PDF is attached to the
+[latest release](https://github.com/turazashvili/shift-stable-exponents/releases/latest),
+and CI rebuilds it on every push (see the `paper` job) so the source is known to compile.
+
+To build it yourself:
+
+```bash
+cd paper && pdflatex paper.tex && pdflatex paper.tex
+```
+
 ## Reviewing this work
 
 If you are checking the claims rather than using them, start with
