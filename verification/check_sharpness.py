@@ -164,6 +164,48 @@ def main():
 
     print()
     print("=" * 78)
+    print("E1(c')  SWEEP: every product-one pair with an ODD term, over a fixed grid")
+    print("=" * 78)
+    # F = -1 + f1*x + f2*x^2,  G = -1 + g1*x + g2*x^2,  f_i, g_i in [-2, 2].
+    # F0*G0 = (-1)*(-1) = 1 throughout, so every case satisfies the necessary
+    # condition. We keep only those carrying a genuine ODD term (f1 != 0 or g1 != 0)
+    # -- the rest are the even family already shown to WORK in E1(b).
+    #
+    # The claim being certified is that evenness is a real constraint: within this
+    # grid, every odd-term case fails. This is what the figure quoted in README.md
+    # and REVIEWING.md refers to; the count below is what the sweep actually covers.
+    # It is a finite sweep, not a proof that every odd term forces failure.
+    grid = range(-2, 3)
+    swept = held = nonintegral = 0
+    examples = []
+    for f1 in grid:
+        for f2 in grid:
+            for g1 in grid:
+                for g2 in grid:
+                    if f1 == 0 and g1 == 0:
+                        continue                      # no odd term: that is E1(b)
+                    Fp = as_series([-1, -f1, -f2], DEG)
+                    Gp = as_series([-1, -g1, -g2], DEG)
+                    a = b_direct(Fp, Gp, N)
+                    if a is None:
+                        nonintegral += 1
+                        continue
+                    swept += 1
+                    if not violations(a):
+                        held += 1
+                        if len(examples) < 5:
+                            examples.append((f1, f2, g1, g2))
+    print(f"  grid                       : f1,f2,g1,g2 in [-2,2] ({len(grid)**4} points)")
+    print(f"  odd-term cases swept       : {swept}")
+    print(f"  non-integral (skipped)     : {nonintegral}")
+    print(f"  of the swept, congruence HELD: {held}   (expected 0)")
+    if examples:
+        print(f"  cases where it held        : {examples}")
+    must("E1(c') no odd-term product-one case satisfies the congruence", held == 0)
+    print(f"  => quote this figure: {swept} odd-term cases swept, all failed")
+
+    print()
+    print("=" * 78)
     print("E1(d)  Is F0*G0 = 1 really NECESSARY? scan all small (F0,G0)")
     print("=" * 78)
     rng = random.Random(5)

@@ -98,10 +98,11 @@ points with $F_0G_0=1$, and — importantly — that $F_0G_0=1$ is **not suffici
 > infinite family. A later version then over-corrected, claiming $F(0)G(0)=1$ could simply
 > *replace* $F(0)=G(0)=1$ — i.e. that it was sufficient. That is also false: sufficiency
 > on the $(-1,-1)$ branch needs $-F$ and $-G$ to be **even**. Evenness is a real
-> constraint, not a convenience — in every case with an odd term that we tested (625
-> scanned) the congruence failed, e.g. $F=-1+x$, $G=-1$ gives
-> $b(4)-b(1)=-17\not\equiv0 \bmod 3$ — though we have not proved that *every* odd term
-> forces failure. The flawed
+> constraint, not a convenience — over the grid $F=-1+f_1x+f_2x^2$,
+> $G=-1+g_1x+g_2x^2$ with $f_i,g_i\in[-2,2]$, all **600** cases carrying an odd term
+> fail (block `E1(c')` of `check_sharpness.py`, which prints the count), e.g. $F=-1+x$,
+> $G=-1$ gives $b(4)-b(1)=-17\not\equiv0 \bmod 3$. That is a finite sweep, not a proof
+> that *every* odd term forces failure. The flawed
 > test block inside `verify_proof.py` has been left in place and clearly labelled as
 > flawed rather than deleted, so you can see what it actually measured. See
 > `docs/RESEARCH-LOG.md` and Section 6.2 of the paper.
@@ -211,7 +212,8 @@ Expected: one hit only, the words "No `sorry`." in the header comment. In partic
 appear.
 
 **4b. Check the hypotheses are load-bearing, not decorative.** Weaken one and confirm the
-proof breaks. For example, in `term_shift`/`dvd_Tint_sub` the constraint `r ≤ i` is
+proof breaks. For example, in `dvd_Tint_sub` (the per-term lemma behind `Bint_shift`)
+the constraint `r ≤ i` is
 essential: without it there is no guarantee that `r!` divides `(n)_i`, so the binomial
 denominators are not absorbed. `verify_proof.py` checks this directly — STEP 5 confirms
 the termwise claim holds on 46,200 cases with `r ≤ i`, and STEP 5b re-runs the same

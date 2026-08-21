@@ -34,9 +34,12 @@ WHY IT SHOULD WORK. The expansion generalizes verbatim:
     b(n) = sum_j (n!/j!) [x^{n-j}] (F^A G^{M j})
          = sum_i (n)_i [x^i] (F^{A(n)} G^{M(n)(n-i)})            [i = n-j]
 The proof needs only that both exponents are shift-stable mod k:
-    A(n+k) == A(n)          because A is an integer polynomial
+    A(n+k) == A(n)               because A is shift-stable
     M(n+k)(n+k-i) == M(n)(n-i)   because M is, and (n+k-i) == (n-i)
-which is exactly what the existing telescoping consumes.
+which is exactly what the existing telescoping consumes. Shift-stability is the operative
+condition and is strictly weaker than being a polynomial: every polynomial with N
+coefficients is shift-stable, but the converse fails, and the proof never needs
+polynomiality.
 """
 
 from fractions import Fraction
@@ -180,7 +183,7 @@ def main():
 
     print()
     print("=" * 78)
-    print("STEP 2 - does the closed-form expansion still hold with polynomial exponents?")
+    print("STEP 2 - does the closed-form expansion still hold with shift-stable exponents?")
     print("=" * 78)
     polys = [
         ("A(n)=n,     M(n)=n    [A361036, proved]", lambda n: n, lambda n: n),
@@ -207,7 +210,7 @@ def main():
 
     print()
     print("=" * 78)
-    print("STEP 3 - THE TEST: congruence for polynomial exponents, random F,G")
+    print("STEP 3 - THE TEST: congruence for shift-stable exponents, random F,G")
     print("=" * 78)
     total = fails = 0
     for label, A, M in polys:
@@ -229,12 +232,17 @@ def main():
 
     print()
     print("=" * 78)
-    print("STEP 4 - control: exponents that are NOT integer polynomials should break")
+    print("STEP 4 - control: exponents that are NOT shift-stable should break")
     print("=" * 78)
+    # These are chosen because they are NOT shift-stable, which is the hypothesis the
+    # proof consumes. They happen also to be non-polynomial, but that is incidental:
+    # shift-stability is strictly weaker than polynomiality, so a non-polynomial but
+    # shift-stable exponent would pass. Note also that shift-stability is not necessary
+    # instance by instance -- with F = 1 the factor F^A(n) is trivial and any A works.
     bads = [
-        ("A(n)=2^n  (not polynomial)", lambda n: 2 ** n, lambda n: 1),
-        ("M(n)=2^n  (not polynomial)", lambda n: n, lambda n: 2 ** n),
-        ("A(n)=n!   (not polynomial)", lambda n: factorial(min(n, 8)), lambda n: 1),
+        ("A(n)=2^n  (not shift-stable)", lambda n: 2 ** n, lambda n: 1),
+        ("M(n)=2^n  (not shift-stable)", lambda n: n, lambda n: 2 ** n),
+        ("A(n)=n!   (not shift-stable)", lambda n: factorial(min(n, 8)), lambda n: 1),
     ]
     for label, A, M in bads:
         nb = 0
@@ -246,7 +254,7 @@ def main():
                 continue
             if viol(a):
                 nb += 1
-        print(f"  {label:32s} {nb}/6 FAIL  (expected: most, if polynomiality matters)")
+        print(f"  {label:34s} {nb}/6 FAIL  (expected: most -- these are not shift-stable)")
         must_fail(f"non-shift-stable control {label.strip()}", nb > 0)
 
     print()

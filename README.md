@@ -164,6 +164,7 @@ python3 verification/check_sharpness.py      # what the constant terms must sati
 python3 verification/check_paper_claims.py   # every numeric example quoted in the paper
 python3 verification/check_not_bala_form.py  # A293013 is outside Bala's 2017 form
 python3 verification/probe_localization.py   # the Z[1/D] localization (Section 8)
+python3 verification/check_figures.py        # every quoted figure traces to a script
 ```
 
 Summary of what they establish:
@@ -182,10 +183,11 @@ Summary of what they establish:
 * the constant terms cannot be relaxed freely. In the diagonal slice $W=1$,
   $A=M=\mathrm{id}$, the condition $F(0)G(0)=1$ is **necessary but not sufficient**:
   it also holds for $F(0)=G(0)=-1$, where the congruence survives when $-F$ and $-G$
-  are *even* series. Evenness is a real constraint, not a convenience: in every case with
-  an odd term that we tested (625 scanned) the congruence failed, e.g. $F=-1+x$, $G=-1$
-  gives $b(4)-b(1)=-17\not\equiv0\bmod 3$. We have not proved that *every* odd term
-  forces failure. `check_sharpness.py`
+  are *even* series. Evenness is a real constraint, not a convenience: over the grid
+  $F=-1+f_1x+f_2x^2$, $G=-1+g_1x+g_2x^2$ with $f_i,g_i\in[-2,2]$, all **600** cases
+  carrying an odd term fail, e.g. $F=-1+x$, $G=-1$ gives
+  $b(4)-b(1)=-17\not\equiv0\bmod 3$. That is a finite sweep, not a proof that *every*
+  odd term forces failure. `check_sharpness.py`
   exhibits both the surviving family and the failures;
 * the family really does contain sequences outside Bala's 2017 form: for A293013 the
   logarithmic derivative $B'/B$ has $[x^6]=117271/3\notin\mathbb{Z}$, which is impossible
@@ -200,7 +202,9 @@ Summary of what they establish:
   hand, not in Lean;
 
 Every figure quoted above is printed by the script named next to it. No number in this
-README or in the paper is quoted unless a script in `verification/` produces it.
+README or in `REVIEWING.md` is quoted unless a script in `verification/` produces it, and
+`check_figures.py` enforces that in CI in both directions — a figure the docs quote but no
+script prints fails the build, as does a figure a script stops printing.
 
 ---
 

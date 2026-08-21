@@ -260,7 +260,8 @@ subtraction, and finds:
 Plus, from `verify_proof.py`: the heart of the proof, termwise shift-stability,
 tested on **46,200** cases with 0 violations. Independent hostile review reported
 `(n,k)` sweeps with 0 violations, confirms the hypotheses
-are load-bearing (dropping `r ≤ i` breaks `term_shift`; the reproducible figure is now
+are load-bearing (dropping `r ≤ i` breaks the per-term lemma, called `term_shift` at the
+time of this entry and `dvd_Tint_sub` in the current source; the reproducible figure is now
 STEP 5b of `verify_proof.py`, which reports 11,509 violations out of 117,600 cases over a
 documented range — the 2637 quoted here was from an external run and could not be
 reproduced from this repository),

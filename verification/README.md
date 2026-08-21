@@ -8,7 +8,10 @@ the Lean development and the paper; these scripts are the guard against
 misformalization and mis-stated numbers.
 
 Every figure quoted in the paper or the top-level README is printed by one of the scripts
-below.
+below, and `check_figures.py` enforces that mechanically in CI rather than leaving it to
+discipline. Three figures were quoted here before that check existed and turned out to be
+produced by nothing — "460,812 (n,k) pairs", "2637 counterexamples" and "625 odd-term
+cases", each caught by outside review. That is what the check exists to prevent.
 
 No dependencies beyond the Python standard library.
 
@@ -33,6 +36,7 @@ loudly if the dump is absent rather than skipping the comparison.
 |---|---|---|
 | `check_faithful.py` | transcribes the Lean definitions *verbatim* (including `Nat` truncated subtraction) and confirms they reproduce the stored OEIS terms — the anti-misformalization guard | yes |
 | `test_unified.py` | the unified statement across eight exponent pairs `(A, M)`, its A278070 term comparison against the dump, plus controls that non-shift-stable exponents must fail | yes |
+| `check_figures.py` | **the traceability rule itself.** Runs the scripts above and checks, in both directions, that every figure quoted in `README.md` and `REVIEWING.md` is printed by one of them: a manifest figure that stops being printed fails, and a new figure the docs quote but no script produces fails. Numbers that are not measurements (years, arXiv ids, the size of the external OEIS dump) sit in an explicit ignore-list with a stated reason | yes |
 
 ## Historical scripts
 

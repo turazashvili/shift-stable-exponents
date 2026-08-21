@@ -92,6 +92,12 @@ jobs:
         # This lives here, not in `numerics`, because it compares against the stored
         # OEIS terms and now fails if the dump is absent rather than skipping silently.
         run: python3 verification/test_unified.py
+      - name: Every quoted figure is produced by a checked-in script
+        # Enforces the traceability rule the READMEs promise, in both directions:
+        # a manifest figure that stops being printed fails, and a new figure in the
+        # docs that no script produces fails. Runs the full sweep_congruence 100 8,
+        # so it is the slowest step here.
+        run: python3 verification/check_figures.py
 
   paper:
     runs-on: ubuntu-latest
