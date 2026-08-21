@@ -1,0 +1,26 @@
+cff-version: 1.2.0
+title: >-
+  Shift-stable exponents and congruences for exponential generating functions
+  (Lean 4 formalization)
+message: If you use this work, please cite it as below.
+type: software
+authors:
+  - family-names: "Turazashvili"
+    given-names: "Nikoloz"
+abstract: >-
+  A Lean 4 / Mathlib formalization of a congruence theorem for sequences
+  b(n) = n! [x^n] (F(x)^A(n) exp(x G(x)^M(n))) with F(0) = G(0) = 1 and
+  shift-stable exponent functions A, M. The theorem resolves conjectures of
+  Peter Bala on OEIS sequences A361036, A361281, A293013 and the general
+  conjecture on A278070, and subsumes Bala's 2017 theorem.
+keywords:
+  - number theory
+  - integer sequences
+  - congruences
+  - exponential generating functions
+  - Lean 4
+  - Mathlib
+  - formal verification
+  - OEIS
+license: Apache-2.0
+repository-code: "https://github.com/turazashvili/shift-stable-exponents"

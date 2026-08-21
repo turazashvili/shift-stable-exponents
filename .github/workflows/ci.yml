@@ -1,0 +1,59 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  lean:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install elan
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh \
+            -o elan-init.sh
+          sh elan-init.sh -y --default-toolchain none
+          echo "$HOME/.elan/bin" >> "$GITHUB_PATH"
+
+      - name: Fetch Mathlib cache
+        run: lake exe cache get
+
+      - name: Build
+        run: lake build
+
+      - name: Check no theorem depends on sorryAx
+        run: |
+          out=$(lake env lean test/Axioms.lean)
+          echo "$out"
+          if echo "$out" | grep -q "sorryAx"; then
+            echo "::error::a theorem depends on sorryAx"
+            exit 1
+          fi
+
+  numerics:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run the verification scripts that need no OEIS dump
+        run: |
+          python3 verification/verify_proof.py
+          python3 verification/check_sharpness.py
+
+  faithfulness:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Fetch the OEIS dump
+        run: git clone --depth 1 https://github.com/oeis/oeisdata.git
+      - name: Check the Lean definitions against the real OEIS terms
+        run: python3 verification/check_faithful.py

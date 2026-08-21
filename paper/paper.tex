@@ -1,0 +1,557 @@
+\documentclass[11pt,a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath,amssymb,amsthm}
+\usepackage{mathtools}
+\usepackage[margin=1.1in]{geometry}
+\usepackage{microtype}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
+\usepackage{cleveref}
+
+\theoremstyle{plain}
+\newtheorem{theorem}{Theorem}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\theoremstyle{definition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+
+\DeclareMathOperator{\lcm}{lcm}
+\newcommand{\N}{\mathbb{N}}
+\newcommand{\Z}{\mathbb{Z}}
+\newcommand{\Q}{\mathbb{Q}}
+\newcommand{\ff}[2]{(#1)_{#2}}
+\newcommand{\coeff}[1]{[x^{#1}]}
+\newcommand{\oeis}[1]{\href{https://oeis.org/#1}{\underline{#1}}}
+
+\title{Congruences for exponential generating functions\\ with shift-stable exponents}
+
+\author{%
+  Nikoloz Turazashvili\\
+  \small Independent Researcher\\
+  \small\texttt{turazashvili@gmail.com}%
+}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+
+\begin{abstract}
+Let $W,F,G\in\Z[[x]]$ with $F(0)=G(0)=1$, and let $A,M\colon\N\to\N$ satisfy
+$A(m+k)\equiv A(m)$ and $M(m+k)\equiv M(m)\pmod{k}$ for all $m,k$; we call such
+functions \emph{shift-stable}, and every polynomial with nonnegative integer
+coefficients is one. We prove that the sequence
+\[
+  b(n)\;=\;n!\,\coeff{n}\!\left(W(x)\,F(x)^{A(n)}\exp\!\big(x\,G(x)^{M(n)}\big)\right)
+\]
+consists of integers and satisfies $b(n+k)\equiv b(n)\pmod{k}$ for all $n,k\ge1$;
+equivalently, for each $k$ the reduction $b\bmod k$ is purely periodic with period
+dividing $k$. The proof is elementary. It resolves three conjectures of Peter Bala,
+recorded in the OEIS in March 2023 (on \oeis{A361036}, \oeis{A361281} and
+\oeis{A293013}), together with the general conjecture on \oeis{A278070}, and it contains
+Bala's 2017 theorem as the case of constant exponents. We show that shift-stability of
+the exponents cannot be dropped and that the hypothesis on constant terms is exactly
+$F(0)G(0)=1$. The entire argument has been formalized in Lean~4 with Mathlib; the
+formalization is stated directly in terms of Mathlib's \texttt{PowerSeries.exp}, and no
+theorem in it depends on \texttt{sorryAx}.
+\end{abstract}
+
+\section{Introduction}
+
+Say that an integer sequence $b$ has the \emph{shift-congruence property} if
+\begin{equation}\label{eq:scp}
+  b(n+k)\equiv b(n) \pmod{k}\qquad\text{for all }n,k\ge 1 .
+\end{equation}
+Equivalently, for each modulus $k$ the sequence $b\bmod k$ is purely periodic with period
+dividing~$k$. The simplest examples are the integer polynomials: if $b\in\Z[X]$ then
+$k\mid b(n+k)-b(n)$ by the binomial theorem. The interest is in sequences that satisfy
+\eqref{eq:scp} for less transparent reasons.
+
+Bala~\cite{bala2017} isolated a large such family. If the exponential generating function
+of $b$ factors as
+\begin{equation}\label{eq:bala2017}
+  \sum_{n\ge0}b(n)\frac{x^n}{n!}=F(x)\exp\big(xG(x)\big),
+  \qquad F,G\in\Z[[x]],\ G(0)=1,
+\end{equation}
+then $b$ satisfies \eqref{eq:scp}. His note closes by asking whether there are integer
+sequences with the shift-congruence property whose exponential generating function is
+\emph{not} of the shape \eqref{eq:bala2017}.
+
+In March 2023, in comments on four OEIS entries, Bala proposed that the property persists
+when the exponents are allowed to grow with $n$. Two of his proposals move $n$ into
+different places, and neither contains the other:
+\begin{align}
+  b(n)&=n!\,\coeff{n}\big(F(x)^{n}\exp(x\,G(x)^{n})\big),
+        &&F(0)=G(0)=1, \label{eq:conjA}\\
+  b(n)&=n!\,\coeff{n}\big(F(x)^{n}\exp(x\,G(x))\big),
+        &&F(0)=G(0)=1, \label{eq:conjB}\\
+  b(n)&=n!\,\coeff{n}\big(F(x)\exp(x\,G(x)^{n})\big),
+        &&G(0)=1,\ F\ \text{arbitrary}. \label{eq:conjC}
+\end{align}
+Statement~\eqref{eq:conjA} appears on \oeis{A361036}, \eqref{eq:conjB} on \oeis{A278070},
+and~\eqref{eq:conjC} on \oeis{A361281}; the special case $F=1$ of \eqref{eq:conjA} with
+$G=1/(1-x)$ is \oeis{A293013}. Note that no condition is imposed on $F(0)$
+in~\eqref{eq:conjC}. These four statements had remained open. The specific sequence
+\oeis{A278070} --- the case $F=1/(1-x)$, $G=1$ of~\eqref{eq:conjB} --- was settled in May
+2026 by an autonomous proof-search agent~\cite{adamczewski2026}, but the general
+statement~\eqref{eq:conjB} was not.
+
+We prove all of them at once, in a form that also covers exponents Bala did not consider.
+
+\begin{definition}\label{def:ss}
+A function $A\colon\N\to\N$ is \emph{shift-stable} if $k\mid A(m+k)-A(m)$ for all
+$m,k\in\N$.
+\end{definition}
+
+Shift-stable functions form a subsemiring of $\N^\N$ under pointwise operations
+(\Cref{lem:ssclosure}); in particular every polynomial with coefficients in $\N$ is
+shift-stable. The condition is strictly weaker than being a polynomial, and it is exactly
+what the proof consumes.
+
+\begin{theorem}\label{thm:main}
+Let $W,F,G\in\Z[[x]]$ with $F(0)=G(0)=1$, and let $A,M\colon\N\to\N$ be shift-stable.
+Define
+\[
+  b(n)\;=\;n!\,\coeff{n}\!\left(W(x)\,F(x)^{A(n)}\exp\!\big(x\,G(x)^{M(n)}\big)\right).
+\]
+Then $b(n)\in\Z$ for all $n$, and $b(n+k)\equiv b(n)\pmod{k}$ for all $n,k\ge1$.
+\end{theorem}
+
+No hypothesis is placed on $W$; this is what accommodates~\eqref{eq:conjC}. Taking $A$ and
+$M$ constant recovers Bala's theorem~\eqref{eq:bala2017}, so \Cref{thm:main} answers his
+closing question in the affirmative with an explicit family: for instance
+$n!\coeff{n}\exp(x/(1-x)^n)$ satisfies~\eqref{eq:scp} and its exponential generating
+function is not of the form~\eqref{eq:bala2017}.
+
+The proof, in \Cref{sec:proof}, is elementary and short. Everything rests on two facts:
+falling factorials are integer polynomials, hence respect congruences in their argument;
+and $r!$ divides $\ff{n}{i}$ whenever $r\le i$, which supplies exactly the divisibility
+needed to clear the denominators introduced by binomial coefficients. In
+\Cref{sec:sharp} we show that neither hypothesis can be discarded: shift-stability of the
+exponents is necessary, and the condition on constant terms is precisely $F(0)G(0)=1$.
+\Cref{sec:prior} discusses the relation to the literature on functions with integral
+difference ratios, where the property \eqref{eq:scp} has been completely characterized in
+a different language. \Cref{sec:lean} describes the Lean~4 formalization.
+
+\paragraph{Notation.}
+$\coeff{n}$ extracts the coefficient of $x^n$. The falling factorial is
+$\ff{y}{i}=y(y-1)\cdots(y-i+1)$, with $\ff{y}{0}=1$; thus $\ff{n}{i}=n!/(n-i)!$ for
+$0\le i\le n$ and $\ff{n}{i}=0$ for integers $0\le n<i$. We use
+$\binom{a}{r}=\ff{a}{r}/r!$ and the convention $\binom{a}{r}=0$ for $r>a\ge0$. All power
+series are formal.
+
+\section{The closed form}\label{sec:closed}
+
+\begin{proposition}\label{prop:closed}
+With $W,F,G,A,M$ as in \Cref{thm:main},
+\begin{equation}\label{eq:closed}
+  b(n)\;=\;\sum_{i=0}^{n}\ff{n}{i}\,
+      \coeff{i}\!\left(W\,F^{A(n)}G^{M(n)(n-i)}\right).
+\end{equation}
+In particular $b(n)\in\Z$.
+\end{proposition}
+
+\begin{proof}
+By definition of the exponential series,
+$\exp\big(xG^{M(n)}\big)=\sum_{j\ge0}x^{j}G^{M(n)j}/j!$, a sum in which only $j\le n$
+contributes to the coefficient of $x^n$. Hence
+\[
+  \coeff{n}\!\left(W F^{A(n)}\exp(xG^{M(n)})\right)
+  =\sum_{j=0}^{n}\frac{1}{j!}\,\coeff{n-j}\!\left(W F^{A(n)}G^{M(n)j}\right),
+\]
+and multiplying by $n!$ and substituting $i=n-j$ gives \eqref{eq:closed}, since
+$n!/j!=n!/(n-i)!=\ff{n}{i}$. Each summand is an integer because $\ff{n}{i}\in\Z$ and all
+series have integer coefficients.
+\end{proof}
+
+\begin{remark}
+The exponent of $G$ in \eqref{eq:closed} is $M(n)(n-i)$, a product of two quantities that
+are separately well behaved under $n\mapsto n+k$. This is the only place where the shape
+of the exponent enters, and it is why the two axes \eqref{eq:conjA} and \eqref{eq:conjB}
+unify.
+\end{remark}
+
+\section{Two lemmas}\label{sec:lemmas}
+
+\begin{lemma}\label{lem:ssclosure}
+If $A,B$ are shift-stable then so are $A+B$ and $AB$; every constant function is
+shift-stable, and so is the identity. Consequently every polynomial with coefficients in
+$\N$ is shift-stable.
+\end{lemma}
+
+\begin{proof}
+Constants and the identity are immediate. If $k\mid A(m+k)-A(m)$ and
+$k\mid B(m+k)-B(m)$ then $k$ divides their sum, and also
+\[
+  A(m{+}k)B(m{+}k)-A(m)B(m)=\big(A(m{+}k)-A(m)\big)B(m{+}k)+A(m)\big(B(m{+}k)-B(m)\big).
+  \qedhere
+\]
+\end{proof}
+
+\begin{lemma}\label{lem:tools}
+Let $i,r,a,a',k,n$ be nonnegative integers.
+\begin{enumerate}[label=\textup{(\alph*)}]
+  \item\label{it:poly} $\ff{X}{i}\in\Z[X]$; hence $k\mid a'-a$ implies
+        $k\mid \ff{a'}{i}-\ff{a}{i}$.
+  \item\label{it:divis} If $r\le i$ then $r!\mid \ff{n}{i}$.
+  \item\label{it:key} If $r\le i$ and $k\mid a'-a$, then
+        $k \;\Big|\; \ff{n}{i}\left(\binom{a'}{r}-\binom{a}{r}\right)$.
+  \item\label{it:edge} If $n<i$ then $k\mid \ff{n+k}{i}$.
+\end{enumerate}
+\end{lemma}
+
+\begin{proof}
+\ref{it:poly} A polynomial with integer coefficients satisfies
+$P(a')\equiv P(a) \pmod{a'-a}$.
+
+\ref{it:divis} $\ff{n}{i}=i!\binom{n}{i}$ and $r!\mid i!$ for $r\le i$.
+
+\ref{it:key} Write $\ff{n}{i}=r!\,u$ with $u\in\Z$, possible by~\ref{it:divis}. Since
+$r!\binom{a}{r}=\ff{a}{r}$,
+\[
+  \ff{n}{i}\left(\binom{a'}{r}-\binom{a}{r}\right)
+  = u\left(r!\binom{a'}{r}-r!\binom{a}{r}\right)
+  = u\left(\ff{a'}{r}-\ff{a}{r}\right),
+\]
+and $k$ divides the last bracket by~\ref{it:poly}.
+
+\ref{it:edge} $\ff{n+k}{i}=\prod_{t=0}^{i-1}(n+k-t)$ and $n<i$, so $t=n$ occurs in the
+range; the corresponding factor is exactly $k$.
+\end{proof}
+
+Part~\ref{it:key} is the engine of the proof. It says that the spare divisibility carried
+by a falling factorial is precisely enough to absorb the denominator of a binomial
+coefficient of the same order, and this is what allows an argument that would otherwise
+only work modulo primes to work modulo every $k$.
+
+\begin{lemma}[Newton expansion]\label{lem:newton}
+Let $P\in\Z[[x]]$ with $P(0)=0$, let $Z\in\Z[[x]]$, and let $a,i\ge0$. Then
+\[
+  \coeff{i}\!\left((1+P)^{a}Z\right)=\sum_{r=0}^{i}\coeff{i}\!\left(P^{r}Z\right)\binom{a}{r}.
+\]
+\end{lemma}
+
+\begin{proof}
+By the binomial theorem, $(1+P)^{a}=\sum_{r=0}^{a}\binom{a}{r}P^{r}$, whence
+$\coeff{i}\big((1+P)^{a}Z\big)=\sum_{r=0}^{a}\binom{a}{r}\coeff{i}(P^{r}Z)$. Since
+$P(0)=0$ we have $x^{r}\mid P^{r}$, so $\coeff{i}(P^{r}Z)=0$ for $r>i$; and
+$\binom{a}{r}=0$ for $r>a$. Hence both the sum over $0\le r\le a$ and the sum over
+$0\le r\le i$ agree with the sum over $0\le r\le a+i$.
+\end{proof}
+
+The essential feature of \Cref{lem:newton} is that the coefficients
+$\coeff{i}(P^{r}Z)$ do not depend on $a$: the dependence of
+$\coeff{i}\big((1+P)^{a}Z\big)$ on the exponent $a$ is entirely through the binomial
+coefficients $\binom{a}{r}$ with $r\le i$.
+
+\section{Proof of \texorpdfstring{\Cref{thm:main}}{Theorem 1}}\label{sec:proof}
+
+Write $P=F-1$ and $Q=G-1$, so $P(0)=Q(0)=0$ and $F=1+P$, $G=1+Q$. Put
+\[
+  \Phi(a,b)\;=\;\coeff{i}\!\left(W F^{a}G^{b}\right),
+  \qquad
+  T_n(i)\;=\;\ff{n}{i}\,\Phi\big(A(n),\,M(n)(n-i)\big),
+\]
+so that $b(n)=\sum_{i\ge0}T_n(i)$ by \Cref{prop:closed}, the sum being finite because
+$\ff{n}{i}=0$ for $i>n$. Fix $n,k\ge1$. We show
+\begin{equation}\label{eq:blockwise}
+  k \mid T_{n+k}(i)-T_{n}(i)\qquad\text{for every } i\ge 0,
+\end{equation}
+which gives the theorem upon summation.
+
+\medskip
+\noindent\textbf{Case $i>n$.} Then $\ff{n}{i}=0$, so $T_n(i)=0$; and
+$T_{n+k}(i)$ is a multiple of $\ff{n+k}{i}$, which $k$ divides by
+\Cref{lem:tools}\ref{it:edge}.
+
+\medskip
+\noindent\textbf{Case $i\le n$.} Abbreviate
+\[
+  a=A(n),\quad a'=A(n+k),\quad b=M(n)(n-i),\quad b'=M(n+k)(n+k-i).
+\]
+Both exponents move by a multiple of $k$. Indeed $k\mid a'-a$ because $A$ is
+shift-stable; and since $i\le n$ we have $n+k-i=(n-i)+k$, so
+$k\mid (n+k-i)-(n-i)$, while $k\mid M(n+k)-M(n)$, whence
+\[
+  b'-b=M(n{+}k)(n{+}k{-}i)-M(n)(n{-}i)
+      =\big(M(n{+}k)-M(n)\big)(n{+}k{-}i)+M(n)\big((n{+}k{-}i)-(n{-}i)\big)
+\]
+is divisible by $k$.
+
+Now telescope in three steps:
+\begin{align}
+  T_{n+k}(i)-T_n(i)
+  &=\Big(\ff{n+k}{i}-\ff{n}{i}\Big)\Phi(a',b') \label{eq:t1}\\
+  &\quad+\ff{n}{i}\Big(\Phi(a',b')-\Phi(a,b')\Big) \label{eq:t2}\\
+  &\quad+\ff{n}{i}\Big(\Phi(a,b')-\Phi(a,b)\Big). \label{eq:t3}
+\end{align}
+
+Term \eqref{eq:t1} is divisible by $k$ by \Cref{lem:tools}\ref{it:poly}, since
+$k\mid (n+k)-n$.
+
+For \eqref{eq:t2}, apply \Cref{lem:newton} with the base $1+P=F$ and with
+$Z=W G^{b'}$:
+\[
+  \Phi(a',b')-\Phi(a,b')
+  =\sum_{r=0}^{i}\coeff{i}\!\left(P^{r}\,W G^{b'}\right)
+     \left(\binom{a'}{r}-\binom{a}{r}\right).
+\]
+Multiplying by $\ff{n}{i}$ and applying \Cref{lem:tools}\ref{it:key} to each summand ---
+legitimate since $r\le i$ and $k\mid a'-a$ --- shows $k$ divides \eqref{eq:t2}.
+
+For \eqref{eq:t3}, apply \Cref{lem:newton} with the base $1+Q=G$ and with
+$Z=W F^{a}$, using $W F^{a}G^{c}=(1+Q)^{c}\big(W F^{a}\big)$:
+\[
+  \Phi(a,b')-\Phi(a,b)
+  =\sum_{s=0}^{i}\coeff{i}\!\left(Q^{s}\,W F^{a}\right)
+     \left(\binom{b'}{s}-\binom{b}{s}\right),
+\]
+and \Cref{lem:tools}\ref{it:key} applies again, now with $s\le i$ and $k\mid b'-b$.
+
+This proves \eqref{eq:blockwise} and hence \Cref{thm:main}. \qed
+
+\begin{remark}
+The two applications of \Cref{lem:tools}\ref{it:key} use $r\le i$ and $s\le i$
+\emph{independently}. No relation such as $r!\,s!\mid i!$ is needed, and this is why the
+prefactor $W$ can be carried along at no cost: it is absorbed into $Z$ in
+\Cref{lem:newton}, which places no hypothesis on $Z$.
+\end{remark}
+
+\section{The OEIS conjectures}\label{sec:cor}
+
+\begin{corollary}[\oeis{A361036}]\label{cor:A361036}
+Let $F,G\in\Z[[x]]$ with $F(0)=G(0)=1$. Then
+$b(n)=n!\coeff{n}\big(F^{n}\exp(xG^{n})\big)$ satisfies \eqref{eq:scp}.
+\end{corollary}
+\begin{proof}
+\Cref{thm:main} with $W=1$, $A(n)=M(n)=n$, shift-stable by \Cref{lem:ssclosure}.
+\end{proof}
+
+\begin{corollary}[\oeis{A278070}, general form]\label{cor:A278070}
+Let $F,G\in\Z[[x]]$ with $F(0)=G(0)=1$. Then
+$b(n)=n!\coeff{n}\big(F^{n}\exp(xG)\big)$ satisfies \eqref{eq:scp}.
+\end{corollary}
+\begin{proof}
+\Cref{thm:main} with $W=1$, $A(n)=n$, $M\equiv1$.
+\end{proof}
+
+\begin{corollary}[\oeis{A361281}, general form]\label{cor:A361281}
+Let $F,G\in\Z[[x]]$ with $G(0)=1$ and $F$ arbitrary. Then
+$b(n)=n!\coeff{n}\big(F\exp(xG^{n})\big)$ satisfies \eqref{eq:scp}.
+\end{corollary}
+\begin{proof}
+\Cref{thm:main} with $W=F$, base $F=1$, $A\equiv0$, $M(n)=n$. The hypothesis
+$F(0)=1$ of the theorem applies to the base $1$, not to the prefactor, which is
+unconstrained.
+\end{proof}
+
+Taking $W=F=1$, $M(n)=n$ and $G=1/(1-x)$ in \Cref{thm:main} settles \oeis{A293013}. The
+theorem also covers exponents not previously considered, for instance $A(n)=n^{2}$,
+$M(n)=n$, or $M(n)=\sigma(n)$ for any shift-stable arithmetic function.
+
+\begin{example}
+For \oeis{A361036} itself, $F=G=1+x$, the sequence begins
+$1, 2, 11, 124, 2225, 56546, 1928707, 85029596, 4687436609$. Modulo $7$ it is
+$1,2,4,5,6,0,4,1,2,\dots$, of period $7$, as \eqref{eq:scp} requires.
+\end{example}
+
+\section{Sharpness}\label{sec:sharp}
+
+\subsection{Shift-stability of the exponents cannot be dropped}
+
+Take $W=1$, $F=1+x$, $G=1$, $M\equiv1$ and $A(n)=2^{n}$, which is not shift-stable. By
+\Cref{prop:closed}, $b(n)=\sum_{i}\ff{n}{i}\binom{2^{n}}{i}$, giving
+\[
+  1,\;3,\;21,\;529,\;58625,\;28788001,\;\dots
+\]
+Here $b(4)-b(1)=58625-3=58622\equiv2\pmod 3$, so \eqref{eq:scp} fails at $n=1$, $k=3$.
+The same happens for $A(n)=n!$.
+
+\subsection{The condition on constant terms is exactly \texorpdfstring{$F(0)G(0)=1$}{F(0)G(0)=1}}
+
+Suppose $b$ as in \Cref{thm:main} satisfies \eqref{eq:scp}, with $W=1$ and
+$A(n)=n$, and write $F_0=F(0)$, $G_0=G(0)$. Taking $n=0$ in \eqref{eq:closed}, only
+$i=0$ contributes, so $b(0)=1$. Taking $n=p$ prime, $\ff{p}{i}\equiv0\pmod p$ for
+$1\le i\le p$, so
+\[
+  b(p)\equiv \coeff{0}\!\left(F^{p}G^{p^{2}}\right)=F_0^{\,p}G_0^{\,p^{2}}\equiv F_0G_0 \pmod p
+\]
+by Fermat's little theorem. Hence \eqref{eq:scp} with $n=0$, $k=p$ forces
+$F_0G_0\equiv1\pmod p$ for every prime $p$, and therefore $F_0G_0=1$.
+
+Over $\Z$ this leaves two branches, $(F_0,G_0)=(1,1)$ and $(-1,-1)$, and the second is
+nonempty. If $F=-\widetilde F$ and $G=-\widetilde G$ with $\widetilde F,\widetilde G$
+\emph{even} series (functions of $x^{2}$) and $\widetilde F(0)=\widetilde G(0)=1$, then
+$b_{F,G}=b_{\widetilde F,\widetilde G}$ identically: for odd $n$ the substitution
+$x\mapsto -x$ fixes $\widetilde F$ and $\widetilde G$ and converts
+$\exp(-x\widetilde G^{n})$ into $\exp(x\widetilde G^{n})$. So \Cref{thm:main} holds
+verbatim on a strictly larger domain than stated. Outside $F_0G_0=1$ it fails: with
+$F=2$, $G=1$, $A(n)=n$, $M\equiv1$ one gets $b(n)=2^{n}$ and
+$b(3)-b(0)=7\not\equiv0\pmod 3$.
+
+\section{Relation to previous work}\label{sec:prior}
+
+\subsection{Functions with integral difference ratios}
+
+Setting $a=n+k$, $b=n$, property \eqref{eq:scp} says exactly that $b$ has
+\emph{integral difference ratios}: $(a-b)\mid f(a)-f(b)$ for all $a\ne b$. This class has
+been completely characterized. Cégielski, Grigorieff and
+Guessarian~\cite{cgg2015} prove that for $f(x)=\sum_{j}\alpha_j\binom{x}{j}$ written in
+the Newton basis, $f$ has integral difference ratios if and only if
+$\lcm(1,\dots,j)\mid\alpha_j$ for all $j$; the sufficient condition $j!\mid\alpha_j$ and
+closure of the class under sum, product and composition are also theirs. Related
+characterizations over $\Z$ appear in work of Pin and Silva~\cite{pinsilva2011}.
+
+It is worth stating plainly why this does not settle the present question. Applying the
+criterion of~\cite{cgg2015} to a specific $f$ requires computing its Newton coefficients
+$\alpha_j=\sum_{i}(-1)^{j-i}\binom{j}{i}f(i)$ and exhibiting the divisibility. For the
+$b$ of \Cref{thm:main} the number of summands in \eqref{eq:closed} grows with $n$, the
+exponent $M(n)(n-i)$ is quadratic in $n$ when $M=\mathrm{id}$, and
+$\coeff{i}(H^{N})$ is only an integer-\emph{valued} polynomial in $N$, not one with
+integer coefficients; the closure properties of~\cite{cgg2015} are for finitely many
+fixed operations and do not apply directly. The two literatures appear to have developed
+independently: a full-text search of the OEIS returns no occurrence of ``integral
+difference ratio'', and~\cite{cgg2015} mentions neither generating functions nor the OEIS.
+We regard the identification of the two as a useful byproduct of this work, and note that
+the criterion of~\cite{cgg2015} already answers, in the abstract, the question left open
+in~\cite{bala2017}, though \Cref{thm:main} answers it with a concrete family.
+
+\subsection{Prior partial results}
+
+Bala's theorem~\eqref{eq:bala2017} is \Cref{thm:main} with constant exponents. His proof
+proceeds by an induction driven by the recurrence obtained from
+$\mathcal{A}'=\mathcal{A}\cdot(G+xG')$, whose coefficients do not depend on the index; that
+argument does not extend to $n$-dependent exponents, since no single such recurrence
+exists. The base case does survive: $b(k)\equiv1\pmod k$ follows from
+\eqref{eq:closed} because $k\mid \ff{k}{i}$ for $i<k$ and the $i=k$ term contributes
+$\coeff{0}=1$.
+
+The single sequence \oeis{A278070} was proved to satisfy \eqref{eq:scp} in May 2026 by an
+autonomous formal proof-search agent~\cite{adamczewski2026}, by a modular argument on its
+closed hypergeometric sum. Several further conjectures of Bala on individual sequences
+have been settled recently by similar means; see for instance~\cite{kallat2026}.
+
+\section{A generalization that fails}\label{sec:fails}
+
+It is tempting to relax the hypothesis $G\in\Z[[x]]$. Consider \oeis{A000085}, the number
+of involutions, with $\sum a(n)x^n/n!=\exp(x+x^{2}/2)$. Here
+$x+x^{2}/2=x\big(1+x/2\big)$, so $G=1+x/2\notin\Z[[x]]$ and \Cref{thm:main} does not
+apply. The OEIS entry records the property only for \emph{odd} $k$, and indeed the
+unrestricted congruence fails: $a(0)=1$, $a(2)=2$, so $a(2)-a(0)\not\equiv0\pmod2$.
+
+Since the single denominator $2$ is exactly the modulus that fails, one might conjecture
+that $G\in\Z[1/D][[x]]$ yields \eqref{eq:scp} for all $k$ coprime to $D$. This is
+\emph{false}. For $G=1+x/2$ the congruence does hold for all odd $k$ we tested
+($k\le13$), but for $G=1+x/3$ it fails even for $k$ coprime to $3$ --- for example at
+$k=2$. So the behaviour of \oeis{A000085} is not an instance of a denominator principle;
+it is better explained by the multiplicative congruence
+$a(n+k)\equiv a(n)a(k)\pmod k$ that its entry also records, which belongs to a different
+family. We record this because the generalization is an attractive guess.
+
+\section{Formal verification}\label{sec:lean}
+
+The argument above has been formalized in Lean~4 against Mathlib; the source is available
+at \url{https://github.com/turazashvili/shift-stable-exponents}. The formalization is stated in terms of Mathlib's
+\texttt{PowerSeries.exp} and \texttt{PowerSeries.subst}, so that the object proved about
+is literally
+\[
+  \texttt{bala W F G A M n} \;=\; n!\cdot\texttt{coeff n (W * F\^{}A n * subst (X * G\^{}M n) (exp }\Q\texttt{))},
+\]
+rather than a combinatorial reformulation. The chain consists of:
+\begin{itemize}[nosep]
+  \item \texttt{bala\_eq\_Bint}: \Cref{prop:closed}, the passage from the exponential to
+        the finite sum \eqref{eq:closed};
+  \item \texttt{coeff\_one\_add\_pow\_mul}: \Cref{lem:newton};
+  \item \texttt{ShiftStable} with closure lemmas: \Cref{def:ss}, \Cref{lem:ssclosure};
+  \item \texttt{Bint\_shift}: \eqref{eq:blockwise} summed;
+  \item \texttt{bala\_congruence}: \Cref{thm:main}; and named corollaries
+        \texttt{bala\_congruence\_A361036}, \texttt{\_A278070}, \texttt{\_A361281},
+        \texttt{\_A293013}.
+\end{itemize}
+For each of these, \texttt{\#print axioms} reports
+\texttt{[propext, Classical.choice, Quot.sound]} --- Mathlib's three standard axioms ---
+and in particular no \texttt{sorryAx}.
+
+As a guard against misformalization we checked, by an independent computation in exact
+integer arithmetic, that the formalized closed form reproduces the stored OEIS terms of
+\oeis{A278070}, \oeis{A293013}, \oeis{A361281} and \oeis{A361036}. Independent numerical
+work also verified \eqref{eq:scp} over $460{,}812$ pairs $(n,k)$ with $n+k\le140$ across
+structured and randomized choices of $(W,F,G,A,M)$, with no exception, and confirmed the
+sharpness statements of \Cref{sec:sharp}.
+
+\section*{Acknowledgements}
+
+The conjectures proved here are due to Peter Bala, who recorded them in the OEIS; this
+paper contributes only their proof. We thank the OEIS and its editors for maintaining the
+record that made the problem findable.
+
+\begin{thebibliography}{9}
+
+\bibitem{adamczewski2026}
+T.~Adamczewski,
+\emph{OEIS Open: how many conjectures can language models turn into theorems?},
+preprint, \href{https://arxiv.org/abs/2608.11941}{arXiv:2608.11941}, 2026.
+
+\bibitem{bala2017}
+P.~Bala,
+\emph{Integer sequences that become periodic on reduction modulo $k$ for all $k$},
+note, 2017. Available at
+\url{https://oeis.org/A047974/a047974_1.pdf}.
+
+\bibitem{cgg2015}
+P.~Cégielski, S.~Grigorieff, and I.~Guessarian,
+\emph{Newton representation of functions over natural integers having integral difference
+ratios},
+Int. J. Number Theory \textbf{11} (2015), 2109--2139.
+Preprint: \href{https://arxiv.org/abs/1310.1507}{arXiv:1310.1507}.
+
+\bibitem{kallat2026}
+A.~Kallat,
+\emph{A proof of Bala's congruence conjecture for \textup{A028342}},
+preprint, \href{https://arxiv.org/abs/2607.18313}{arXiv:2607.18313}, 2026.
+
+\bibitem{mathlib}
+The Mathlib Community,
+\emph{The Lean mathematical library},
+in \emph{Proc. CPP 2020}, ACM, 2020, pp. 367--381.
+
+\bibitem{pinsilva2011}
+J.-É.~Pin and P.~V.~Silva,
+\emph{A noncommutative extension of Mahler's theorem on interpolation series},
+Internat. J. Algebra Comput. \textbf{21} (2011), 295--314.
+
+\bibitem{oeis}
+OEIS Foundation Inc.,
+\emph{The On-Line Encyclopedia of Integer Sequences}, \url{https://oeis.org}.
+
+\bibitem{tsoukalas2026}
+G.~Tsoukalas et al.,
+\emph{Advancing mathematics research with AI-driven formal proof search},
+preprint, \href{https://arxiv.org/abs/2605.22763}{arXiv:2605.22763}, 2026.
+
+\end{thebibliography}
+
+\bigskip
+\noindent\emph{2020 Mathematics Subject Classification:}
+Primary 11B50; Secondary 11B65, 05A15, 68V20.
+
+\medskip
+\noindent\emph{Keywords:} shift congruence, integral difference ratios, exponential
+generating function, falling factorial, formal verification, Lean, OEIS.
+
+\medskip
+\noindent(Concerned with sequences
+\oeis{A000262},
+\oeis{A047974},
+\oeis{A278070},
+\oeis{A293013},
+\oeis{A361036},
+\oeis{A361281}.)
+
+\end{document}
