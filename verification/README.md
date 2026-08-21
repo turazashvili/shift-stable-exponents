@@ -36,7 +36,7 @@ loudly if the dump is absent rather than skipping the comparison.
 |---|---|---|
 | `check_faithful.py` | transcribes the Lean definitions *verbatim* (including `Nat` truncated subtraction) and confirms they reproduce the stored OEIS terms — the anti-misformalization guard | yes |
 | `test_unified.py` | the unified statement across eight exponent pairs `(A, M)`, its A278070 term comparison against the dump, plus controls that non-shift-stable exponents must fail | yes |
-| `check_figures.py` | **the traceability rule itself.** Runs the scripts above and checks, in both directions, that every figure quoted in `README.md` and `REVIEWING.md` is printed by one of them: a manifest figure that stops being printed fails, and a new figure the docs quote but no script produces fails. Numbers that are not measurements (years, arXiv ids, the size of the external OEIS dump) sit in an explicit ignore-list with a stated reason | yes |
+| `check_figures.py` | **the traceability rule itself.** Runs the scripts above and checks, in both directions, that every figure quoted in `README.md`, `REVIEWING.md` and `paper/paper.tex` is printed by one of them: a manifest figure that stops being printed fails, and a new figure a document quotes but no script produces fails. Numbers that are not measurements (years, arXiv ids, the size of the external OEIS dump) sit in an explicit ignore-list with a stated reason. The `.tex` scanner strips comments, the bibliography and reference macros, and reads math mode — an earlier hand audit using a regex that skipped `$`-adjacent digits missed `$7128$` entirely | yes |
 
 ## Historical scripts
 

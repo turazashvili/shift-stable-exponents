@@ -33,7 +33,7 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-DOCS = ["README.md", "REVIEWING.md"]
+DOCS = ["README.md", "REVIEWING.md", "paper/paper.tex"]
 
 # --------------------------------------------------------------------------
 # Figures that are measurements. figure -> (script, argv tail)
@@ -78,6 +78,17 @@ MANIFEST = {
     "1928707": ("check_faithful.py", []),
     "85029596": ("check_faithful.py", []),
     "4687436609": ("check_faithful.py", []),
+
+    # ---- figures quoted in paper/paper.tex ----------------------------------
+    # sequence terms and worked examples, all asserted by check_paper_claims.py
+    "58625": ("check_paper_claims.py", []),
+    "529": ("check_paper_claims.py", []),
+    "28788001": ("check_paper_claims.py", []),
+    "58622": ("check_paper_claims.py", []),
+    "1546": ("check_paper_claims.py", []),
+    "2777": ("check_paper_claims.py", []),
+    # the localization sweep of Section 8
+    "7128": ("probe_localization.py", []),
 }
 
 # --------------------------------------------------------------------------
@@ -94,6 +105,7 @@ IGNORE = {
     "2608": "arXiv identifier 2608.11941",
     "2607": "arXiv identifier 2607.18313",
     "289": "a line number in Basic.lean, not a quantity",
+    "2020": "the year of the Mathematics Subject Classification scheme",
     "398442": (
         "number of sequences in the external August 2026 OEIS dump; provenance of "
         "the search, not a claim about our results, and verifiable by counting the "
@@ -102,12 +114,41 @@ IGNORE = {
 }
 
 
-def figures_in(text):
-    """Numbers in the docs that look like a quoted quantity."""
-    pat = re.compile(
-        r"(?<![\w.])\d{1,3}(?:,\d{3})+(?![\w])"     # comma-grouped: 646,400
-        r"|(?<![\w.$^_{\-])\d{3,}(?![\w])"          # three or more digits
-    )
+def strip_latex(t):
+    """Remove the parts of a .tex file that carry no quoted quantities.
+
+    This has to be done carefully. An earlier hand audit of paper.tex used a regex that
+    excluded digits adjacent to `$` and therefore missed `$7128$` entirely, reporting a
+    clean result while a figure went unchecked. So: strip comments, drop the
+    bibliography wholesale (page ranges and years are not measurements), remove the
+    arguments of reference-like macros, and remove sub/superscripts -- then scan the
+    remainder, math mode included.
+    """
+    t = re.sub(r"(?<!\\)%.*", "", t)
+    t = re.sub(r"\\begin\{thebibliography\}.*?\\end\{thebibliography\}", "", t, flags=re.S)
+    for cmd in ("label", "ref", "Cref", "cref", "eqref", "cite", "url", "oeis",
+                "texorpdfstring", "bibitem"):
+        t = re.sub(r"\\" + cmd + r"\{[^{}]*\}", "", t)
+    t = re.sub(r"\\href\{[^{}]*\}\{[^{}]*\}", "", t)
+    t = re.sub(r"\^\{?\d+\}?", "", t)      # exponents, e.g. x^{2}
+    t = re.sub(r"_\{?\d+\}?", "", t)        # subscripts
+    return t
+
+
+def figures_in(text, is_tex=False):
+    """Numbers in a document that look like a quoted quantity."""
+    if is_tex:
+        text = strip_latex(text)
+        # In LaTeX the thousands separator is {,} -- a bare comma is a list separator.
+        # Normalise the former, then do NOT apply the comma-grouped pattern, or a term
+        # list such as "1, 5, 55, 961, 24101" is misread as the single figure 55,961.
+        text = text.replace("{,}", "")
+        pat = re.compile(r"(?<![\w.])\d{3,}(?![\w])")
+    else:
+        pat = re.compile(
+            r"(?<![\w.])\d{1,3}(?:,\d{3})+(?![\w])"     # comma-grouped: 646,400
+            r"|(?<![\w.])\d{3,}(?![\w])"                 # three or more digits
+        )
     out = {}
     for m in pat.finditer(text):
         raw = m.group(0)
@@ -159,7 +200,7 @@ def main():
     print("REVERSE: doc figure -> manifest or ignore-list")
     for doc in DOCS:
         text = (ROOT / doc).read_text(encoding="utf-8")
-        found = figures_in(text)
+        found = figures_in(text, is_tex=doc.endswith(".tex"))
         unknown = [f for f in found if f not in MANIFEST and f not in IGNORE]
         print(f"  {doc}: {len(found)} figures, {len(unknown)} unaccounted")
         for f in sorted(unknown):
@@ -169,8 +210,12 @@ def main():
             )
 
     # ---- manifest rot ----------------------------------------------------
-    all_docs = "\n".join((ROOT / d).read_text(encoding="utf-8") for d in DOCS)
-    all_flat = all_docs.replace(",", "")
+    all_flat = ""
+    for d in DOCS:
+        txt = (ROOT / d).read_text(encoding="utf-8")
+        if d.endswith(".tex"):
+            txt = strip_latex(txt).replace("{,}", "")
+        all_flat += txt.replace(",", "") + "\n"
     stale = [f for f in MANIFEST if f not in all_flat]
     if stale:
         print()

@@ -239,11 +239,15 @@ def main():
     print("=" * 78)
     print("NUMERIC CLAIMS IN paper/paper.tex")
     print("=" * 78)
-    width = max(len(d) for _, _, d, _, _ in CHECKS)
     bad = 0
     for ok, sec, desc, got, want in CHECKS:
         if ok:
-            print(f"  [ok]   {sec:<14} {desc}")
+            # The asserted value is printed, not just the label, for two reasons: a
+            # reviewer can read the actual numbers, and verification/check_figures.py
+            # scans this output to confirm every figure quoted in the paper is produced
+            # by a script. Do not truncate these values -- a truncated list would hide
+            # figures from that check.
+            print(f"  [ok]   {sec:<14} {desc} = {got}")
         else:
             bad += 1
             print(f"  [FAIL] {sec:<14} {desc}")

@@ -202,9 +202,10 @@ Summary of what they establish:
   hand, not in Lean;
 
 Every figure quoted above is printed by the script named next to it. No number in this
-README or in `REVIEWING.md` is quoted unless a script in `verification/` produces it, and
-`check_figures.py` enforces that in CI in both directions — a figure the docs quote but no
-script prints fails the build, as does a figure a script stops printing.
+README, in `REVIEWING.md`, or in the paper is quoted unless a script in `verification/`
+produces it, and `check_figures.py` enforces that in CI in both directions — a figure a
+document quotes but no script prints fails the build, as does a figure a script stops
+printing.
 
 ---
 

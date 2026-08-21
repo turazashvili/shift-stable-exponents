@@ -60,9 +60,10 @@ dividing $k$. The proof is elementary. It resolves three conjectures of Peter Ba
 recorded in the OEIS in March 2023 (on \oeis{A361036}, \oeis{A361281} and
 \oeis{A293013}), together with the general conjecture on \oeis{A278070}, and it contains
 Bala's 2017 theorem as the case of constant exponents. We show that shift-stability of
-the exponents cannot be dropped, and we determine what the constant terms must satisfy:
-in the diagonal case $A=M=\mathrm{id}$ the condition $F(0)G(0)=1$ is necessary, but it is
-not sufficient. The main theorem and its four OEIS corollaries have been formalized in
+the exponents cannot be dropped, and we identify the necessary condition on the constant
+terms: in the diagonal case $A=M=\mathrm{id}$ the condition $F(0)G(0)=1$ is necessary, and
+we show that it is not sufficient. The main theorem and its four OEIS corollaries have
+been formalized in
 Lean~4 with Mathlib; the formalization is stated directly in terms of Mathlib's
 \texttt{PowerSeries.exp}, and no theorem in it depends on \texttt{sorryAx}. The sharpness
 analysis and the two supplementary results of \Cref{sec:notbala} and \Cref{sec:fails} are
@@ -439,7 +440,10 @@ so that $F_0G_0=1$ while $-F=1-x$ carries an odd term. Then $b$ begins
 and $b(4)-b(1)=-15-2=-17\not\equiv0\pmod 3$, so \eqref{eq:scp} fails at $n=1$, $k=3$.
 The correct statement is therefore: $F_0=G_0=1$ is sufficient (\Cref{thm:main});
 \eqref{eq:prodone} is necessary; and on the branch $F_0=G_0=-1$ sufficiency holds for the
-even subfamily above but not in general.
+even subfamily above but not in general. We do not determine the exact boundary on that
+branch. Over the grid $F=-1+f_1x+f_2x^{2}$, $G=-1+g_1x+g_2x^{2}$ with
+$f_i,g_i\in\{-2,\dots,2\}$, all $600$ cases carrying an odd term fail; but that is a
+finite search, not a proof that every odd term forces failure.
 
 Finally, \eqref{eq:prodone} is a statement about the diagonal slice only. The argument
 used $A(p)=p$ and $M(p)=p$; for $A=\mathrm{id}$, $M\equiv1$ it goes through unchanged and
@@ -681,8 +685,10 @@ work also verified \eqref{eq:scp} over $646{,}400$ pairs $(n,k)$ with $n+k\le100
 $128$ combinations of structured and randomized choices of $(W,F,G,A,M)$, with no
 exception, and confirmed the sharpness statements of \Cref{sec:sharp}. Each figure quoted
 in this paper is printed by a script in the \texttt{verification/} directory of the
-repository; the sweep above is \texttt{sweep\_congruence.py} and the localization probe of
-\Cref{sec:fails} is \texttt{probe\_localization.py}.
+repository; the sweep above is \texttt{sweep\_congruence.py} and the localization search of
+\Cref{sec:fails} is \texttt{probe\_localization.py}. That correspondence is itself checked:
+\texttt{check\_figures.py} fails if this paper quotes a figure no script produces, or if a
+script stops producing one it quotes.
 
 \section*{Acknowledgements}
 
