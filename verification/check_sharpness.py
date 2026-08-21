@@ -1,18 +1,28 @@
 #!/usr/bin/env python3
 """
-Independently check the hostile referee's error E1.
+What the constant terms must satisfy (Section 6.2 of the paper).
 
-MY CLAIM (in FINDINGS.md) was: "sharpness confirmed (dropping F(0)=1 or G(0)=1
-breaks the congruence)".
+Two successive errors were made here, and this script is what settles both.
 
-REFEREE'S CLAIM: that is FALSE. The true necessary condition is F(0)*G(0) = 1,
-which over Z also allows (F(0), G(0)) = (-1, -1). They assert an infinite family:
-if F = -F~ and G = -G~ with F~, G~ EVEN series (functions of x^2) and F~(0)=G~(0)=1,
-then b_{F,G} = b_{F~,G~} identically, so the congruence holds.
+ERROR 1 (ours, corrected): we claimed "sharpness confirmed -- dropping F(0)=1 or
+G(0)=1 breaks the congruence". FALSE. In the diagonal slice W=1, A=M=id the
+necessary condition is F(0)*G(0) = 1, which over Z also allows
+(F(0), G(0)) = (-1, -1); and there is an infinite surviving family there:
+if F = -F~ and G = -G~ with F~, G~ EVEN series (functions of x^2) and
+F~(0)=G~(0)=1, then b_{F,G} = b_{F~,G~} identically, so the congruence holds.
 
-Their necessity derivation: at n=0, k=p prime, (p)_i == 0 mod p for i >= 1, so
+Necessity derivation: at n=0, k=p prime, (p)_i == 0 mod p for i >= 1, so
     b(p) == F0^p * G0^{p^2} == F0*G0 (mod p)   [Fermat]
 and b(0) = 1, forcing F0*G0 == 1 mod p for every prime p, hence F0*G0 = 1.
+
+ERROR 2 (ours, corrected): we then over-corrected and claimed F(0)*G(0) = 1 could
+simply REPLACE F(0)=G(0)=1 -- i.e. that it was sufficient. Also FALSE. The evenness
+above is a real constraint, not a convenience: block E1(c) below exhibits
+product-one pairs carrying an ODD term for which the congruence fails
+(e.g. F = -1+x, G = -1 gives b(4)-b(1) = -17, not divisible by 3).
+
+So: F0 = G0 = 1 is sufficient (the theorem); F0*G0 = 1 is necessary in that slice;
+and on the (-1,-1) branch sufficiency holds for the even subfamily only.
 
 This script decides the matter with exact integer arithmetic.
 """
@@ -78,6 +88,18 @@ def violations(a, maxk=None):
             if (a[n + k] - a[n]) % k != 0]
 
 
+# --- regression tracking -------------------------------------------------
+# Checks recorded here MUST hold. The script exits non-zero if any fails, so CI
+# detects a mathematical regression and not merely a crash.
+REGRESSIONS = []
+
+
+def must(label, ok):
+    if not ok:
+        REGRESSIONS.append(label)
+    return ok
+
+
 def main():
     DEG, N = 24, 24
     print("=" * 78)
@@ -94,6 +116,7 @@ def main():
         print(f"  all ones: {all(x == 1 for x in a)}")
         print(f"  violations: {len(v)}   -> MY SHARPNESS CLAIM IS "
               f"{'FALSE' if not v else 'intact here'}")
+        must("E1(a) F=G=-1 satisfies the congruence", len(v) == 0)
 
     print()
     print("=" * 78)
@@ -121,6 +144,8 @@ def main():
         print(f"      b_-  = {a_neg[:6]}")
         print(f"      b_+  = {a_pos[:6]}")
         print(f"      identical: {same}   violations(b_-): {len(v)}")
+        must(f"E1(b) even branch identical {Ft[:3]}", same)
+        must(f"E1(b) even branch congruence {Ft[:3]}", len(v) == 0)
 
     print()
     print("=" * 78)
@@ -135,6 +160,7 @@ def main():
             continue
         v = violations(a)
         print(f"  F~={Ft} G~={Gt} -> violations: {len(v)}  (expect > 0)")
+        must(f"E1(c) odd-term control DOES fail {Ft}", len(v) > 0)
 
     print()
     print("=" * 78)
@@ -158,3 +184,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+    if REGRESSIONS:
+        print()
+        print("=" * 78)
+        print(f"REGRESSION: {len(REGRESSIONS)} required check(s) FAILED")
+        for r in REGRESSIONS:
+            print(f"  - {r}")
+        print("=" * 78)
+        raise SystemExit(1)
+    print()
+    print("All required checks passed.")

@@ -11,7 +11,7 @@ No dependencies beyond the Python standard library.
 | script | what it checks |
 |---|---|
 | `verify_proof.py` | every step of the proof separately: the two expansions against the definition, the three divisibility lemmas over exhaustive ranges, the edge terms, and **termwise shift-stability over 46,200 cases** |
-| `check_sharpness.py` | the necessary condition on the constant terms. Establishes that `F(0)=G(0)=1` is *not* necessary — `F(0)·G(0)=1` is, and the `(-1,-1)` branch is a nonempty infinite family |
+| `check_sharpness.py` | what the constant terms must satisfy. In the diagonal slice `W=1`, `A=M=id`: shows `F(0)=G(0)=1` is *not* necessary, that `F(0)·G(0)=1` *is* necessary, that it is **not sufficient** (odd-term controls fail), and that the `(-1,-1)` branch with *even* `-F`, `-G` is a nonempty infinite family |
 
 ## Scripts that need the OEIS dump
 

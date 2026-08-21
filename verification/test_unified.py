@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """
-Does the technique generalize?  Test a UNIFIED statement covering both open axes.
+Does the technique generalize?  Test a UNIFIED statement covering both axes.
 
-WHAT WE ALREADY PROVED (Bala, OEIS A361036, Mar 2023):
+NOTE (historical): this script was written while the two axes below were still open
+conjectures. Both are now theorems -- see `bala_congruence` and its corollaries in
+ShiftStableExponents/Basic.lean, and Sections 4-5 of the paper. The labels "OPEN"
+retained below refer to the state of the problem when the script was written; the
+script is kept as an independent numerical check of the unified statement.
+
+AXIS 1 (Bala, OEIS A361036, Mar 2023):
     b(n) = n! [x^n] ( F(x)^n * exp(x * G(x)^n) )        -> b(n+k) = b(n) mod k
 
-STILL OPEN (OEIS A278070's *general* comment):
+AXIS 2 (OEIS A278070's *general* comment):
     b(n) = n! [x^n] ( F(x)^n * exp(x * G(x)) )          -- fixed G in the exponential
 
 These are different axes. Proposed unification: let the two exponents be ARBITRARY
@@ -17,8 +23,8 @@ integer polynomials in n.
     Then b(n+k) == b(n) (mod k) for all n, k >= 1.
 
 Instances:
-    A(n)=n, M(n)=n   -> Bala A361036 general   (proved: BalaEndToEnd.lean)
-    A(n)=n, M(n)=1   -> A278070 general        (OPEN)
+    A(n)=n, M(n)=n   -> Bala A361036 general   (proved)
+    A(n)=n, M(n)=1   -> A278070 general        (now proved)
     A(n)=0, M(n)=n   -> A293013 / A361281      (proved)
     A(n)=0, M(n)=1   -> Bala's 2017 theorem
 so a single theorem would subsume all of them.
@@ -152,8 +158,8 @@ def main():
     print("STEP 2 - does the closed-form expansion still hold with polynomial exponents?")
     print("=" * 78)
     polys = [
-        ("A(n)=n,     M(n)=n    [Bala A361036, PROVED]", lambda n: n, lambda n: n),
-        ("A(n)=n,     M(n)=1    [A278070 general, OPEN]", lambda n: n, lambda n: 1),
+        ("A(n)=n,     M(n)=n    [A361036, proved]", lambda n: n, lambda n: n),
+        ("A(n)=n,     M(n)=1    [A278070 general, proved]", lambda n: n, lambda n: 1),
         ("A(n)=0,     M(n)=n    [A293013/A361281]",       lambda n: 0, lambda n: n),
         ("A(n)=1,     M(n)=1    [Bala 2017]",             lambda n: 1, lambda n: 1),
         ("A(n)=2n,    M(n)=n+1",                          lambda n: 2 * n, lambda n: n + 1),
@@ -217,7 +223,7 @@ def main():
 
     print()
     print("=" * 78)
-    print("STEP 5 - the two named OPEN targets, at higher range")
+    print("STEP 5 - the two formerly open named targets, at higher range")
     print("=" * 78)
     for label, F, G, A, M in [
         ("A278070 general: F=1/(1-x), G=1+x, A=n, M=1", inv, onep, lambda n: n, lambda n: 1),

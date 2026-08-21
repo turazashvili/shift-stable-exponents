@@ -11,6 +11,10 @@
 \usepackage[colorlinks=true,linkcolor=blue,citecolor=blue,urlcolor=blue]{hyperref}
 \usepackage{cleveref}
 
+% The Lean identifiers below are long and unbreakable; give the line breaker a little
+% slack rather than emitting overfull boxes.
+\emergencystretch=3em
+
 \theoremstyle{plain}
 \newtheorem{theorem}{Theorem}
 \newtheorem{proposition}[theorem]{Proposition}
@@ -50,23 +54,26 @@ coefficients is one. We prove that the sequence
 \[
   b(n)\;=\;n!\,\coeff{n}\!\left(W(x)\,F(x)^{A(n)}\exp\!\big(x\,G(x)^{M(n)}\big)\right)
 \]
-consists of integers and satisfies $b(n+k)\equiv b(n)\pmod{k}$ for all $n,k\ge1$;
+consists of integers and satisfies $b(n+k)\equiv b(n)\pmod{k}$ for all $n\ge0$, $k\ge1$;
 equivalently, for each $k$ the reduction $b\bmod k$ is purely periodic with period
 dividing $k$. The proof is elementary. It resolves three conjectures of Peter Bala,
 recorded in the OEIS in March 2023 (on \oeis{A361036}, \oeis{A361281} and
 \oeis{A293013}), together with the general conjecture on \oeis{A278070}, and it contains
 Bala's 2017 theorem as the case of constant exponents. We show that shift-stability of
-the exponents cannot be dropped and that the hypothesis on constant terms is exactly
-$F(0)G(0)=1$. The entire argument has been formalized in Lean~4 with Mathlib; the
-formalization is stated directly in terms of Mathlib's \texttt{PowerSeries.exp}, and no
-theorem in it depends on \texttt{sorryAx}.
+the exponents cannot be dropped, and we determine what the constant terms must satisfy:
+in the diagonal case $A=M=\mathrm{id}$ the condition $F(0)G(0)=1$ is necessary, but it is
+not sufficient. The main theorem and its four OEIS corollaries have been formalized in
+Lean~4 with Mathlib; the formalization is stated directly in terms of Mathlib's
+\texttt{PowerSeries.exp}, and no theorem in it depends on \texttt{sorryAx}. The sharpness
+analysis and the two supplementary results of \Cref{sec:notbala} and \Cref{sec:fails} are
+proved by hand and checked numerically.
 \end{abstract}
 
 \section{Introduction}
 
 Say that an integer sequence $b$ has the \emph{shift-congruence property} if
 \begin{equation}\label{eq:scp}
-  b(n+k)\equiv b(n) \pmod{k}\qquad\text{for all }n,k\ge 1 .
+  b(n+k)\equiv b(n) \pmod{k}\qquad\text{for all }n\ge 0,\ k\ge 1 .
 \end{equation}
 Equivalently, for each modulus $k$ the sequence $b\bmod k$ is purely periodic with period
 dividing~$k$. The simplest examples are the integer polynomials: if $b\in\Z[X]$ then
@@ -120,21 +127,24 @@ Define
 \[
   b(n)\;=\;n!\,\coeff{n}\!\left(W(x)\,F(x)^{A(n)}\exp\!\big(x\,G(x)^{M(n)}\big)\right).
 \]
-Then $b(n)\in\Z$ for all $n$, and $b(n+k)\equiv b(n)\pmod{k}$ for all $n,k\ge1$.
+Then $b(n)\in\Z$ for all $n$, and $b(n+k)\equiv b(n)\pmod{k}$ for all $n\ge0$, $k\ge1$.
 \end{theorem}
 
 No hypothesis is placed on $W$; this is what accommodates~\eqref{eq:conjC}. Taking $A$ and
 $M$ constant recovers Bala's theorem~\eqref{eq:bala2017}, so \Cref{thm:main} answers his
 closing question in the affirmative with an explicit family: for instance
 $n!\coeff{n}\exp(x/(1-x)^n)$ satisfies~\eqref{eq:scp} and its exponential generating
-function is not of the form~\eqref{eq:bala2017}.
+function is not of the form~\eqref{eq:bala2017}, as we verify in
+\Cref{prop:A293013outside}.
 
 The proof, in \Cref{sec:proof}, is elementary and short. Everything rests on two facts:
 falling factorials are integer polynomials, hence respect congruences in their argument;
 and $r!$ divides $\ff{n}{i}$ whenever $r\le i$, which supplies exactly the divisibility
 needed to clear the denominators introduced by binomial coefficients. In
-\Cref{sec:sharp} we show that neither hypothesis can be discarded: shift-stability of the
-exponents is necessary, and the condition on constant terms is precisely $F(0)G(0)=1$.
+\Cref{sec:sharp} we show what the hypotheses cost: shift-stability of the exponents
+cannot be dropped from a uniform theorem, and in the diagonal case $A=M=\mathrm{id}$ the
+constant terms must satisfy $F(0)G(0)=1$ --- a condition that is necessary but, as we
+also show, not sufficient.
 \Cref{sec:prior} discusses the relation to the literature on functions with integral
 difference ratios, where the property \eqref{eq:scp} has been completely characterized in
 a different language. \Cref{sec:lean} describes the Lean~4 formalization.
@@ -259,7 +269,7 @@ Write $P=F-1$ and $Q=G-1$, so $P(0)=Q(0)=0$ and $F=1+P$, $G=1+Q$. Put
   T_n(i)\;=\;\ff{n}{i}\,\Phi\big(A(n),\,M(n)(n-i)\big),
 \]
 so that $b(n)=\sum_{i\ge0}T_n(i)$ by \Cref{prop:closed}, the sum being finite because
-$\ff{n}{i}=0$ for $i>n$. Fix $n,k\ge1$. We show
+$\ff{n}{i}=0$ for $i>n$. Fix $n\ge0$ and $k\ge1$. We show
 \begin{equation}\label{eq:blockwise}
   k \mid T_{n+k}(i)-T_{n}(i)\qquad\text{for every } i\ge 0,
 \end{equation}
@@ -381,27 +391,64 @@ Take $W=1$, $F=1+x$, $G=1$, $M\equiv1$ and $A(n)=2^{n}$, which is not shift-stab
 Here $b(4)-b(1)=58625-3=58622\equiv2\pmod 3$, so \eqref{eq:scp} fails at $n=1$, $k=3$.
 The same happens for $A(n)=n!$.
 
-\subsection{The condition on constant terms is exactly \texorpdfstring{$F(0)G(0)=1$}{F(0)G(0)=1}}
+So shift-stability cannot be discarded from a statement that is meant to hold for all
+admissible $F$. It is not, however, necessary instance by instance: if $F=1$ the factor
+$F^{A(n)}$ is identically $1$, the value of $A$ never enters \eqref{eq:closed}, and
+\eqref{eq:scp} holds for \emph{every} $A$, shift-stable or not --- with $A(n)=2^{n}$ or
+$A(n)=n!$ included. The same remark applies to $M$ when $G=1$. What the hypothesis buys
+is uniformity in $F$ and $G$, not necessity.
 
-Suppose $b$ as in \Cref{thm:main} satisfies \eqref{eq:scp}, with $W=1$ and
-$A(n)=n$, and write $F_0=F(0)$, $G_0=G(0)$. Taking $n=0$ in \eqref{eq:closed}, only
-$i=0$ contributes, so $b(0)=1$. Taking $n=p$ prime, $\ff{p}{i}\equiv0\pmod p$ for
-$1\le i\le p$, so
+\subsection{What the constant terms must satisfy}\label{sec:sharpconst}
+
+Throughout this subsection $W=1$ and $A=M=\mathrm{id}$, the diagonal case
+\eqref{eq:conjA}; the conclusion is specific to that slice, as we note at the end.
+Suppose such a $b$ satisfies \eqref{eq:scp}, and write $F_0=F(0)$, $G_0=G(0)$. Taking
+$n=0$ in \eqref{eq:closed}, only $i=0$ contributes, so $b(0)=1$. Taking $n=p$ prime,
+$\ff{p}{i}\equiv0\pmod p$ for $1\le i\le p$, so only $i=0$ survives modulo $p$, and its
+$G$-exponent is $M(p)\,p=p^{2}$:
 \[
   b(p)\equiv \coeff{0}\!\left(F^{p}G^{p^{2}}\right)=F_0^{\,p}G_0^{\,p^{2}}\equiv F_0G_0 \pmod p
 \]
 by Fermat's little theorem. Hence \eqref{eq:scp} with $n=0$, $k=p$ forces
-$F_0G_0\equiv1\pmod p$ for every prime $p$, and therefore $F_0G_0=1$.
+$F_0G_0\equiv1\pmod p$ for every prime $p$, and therefore
+\begin{equation}\label{eq:prodone}
+  F_0G_0=1 .
+\end{equation}
+Outside \eqref{eq:prodone} the congruence indeed fails: with $F=2$, $G=1$ one gets
+$b(n)=2^{n}$ and $b(3)-b(0)=7\not\equiv0\pmod 3$.
 
-Over $\Z$ this leaves two branches, $(F_0,G_0)=(1,1)$ and $(-1,-1)$, and the second is
-nonempty. If $F=-\widetilde F$ and $G=-\widetilde G$ with $\widetilde F,\widetilde G$
-\emph{even} series (functions of $x^{2}$) and $\widetilde F(0)=\widetilde G(0)=1$, then
-$b_{F,G}=b_{\widetilde F,\widetilde G}$ identically: for odd $n$ the substitution
-$x\mapsto -x$ fixes $\widetilde F$ and $\widetilde G$ and converts
-$\exp(-x\widetilde G^{n})$ into $\exp(x\widetilde G^{n})$. So \Cref{thm:main} holds
-verbatim on a strictly larger domain than stated. Outside $F_0G_0=1$ it fails: with
-$F=2$, $G=1$, $A(n)=n$, $M\equiv1$ one gets $b(n)=2^{n}$ and
-$b(3)-b(0)=7\not\equiv0\pmod 3$.
+Over $\Z$, \eqref{eq:prodone} leaves two branches, $(F_0,G_0)=(1,1)$ and $(-1,-1)$, and
+the second is nonempty. If $F=-\widetilde F$ and $G=-\widetilde G$ with
+$\widetilde F,\widetilde G$ \emph{even} series (functions of $x^{2}$) and
+$\widetilde F(0)=\widetilde G(0)=1$, then $b_{F,G}=b_{\widetilde F,\widetilde G}$
+identically: for odd $n$ the substitution $x\mapsto -x$ fixes $\widetilde F$ and
+$\widetilde G$ and converts $\exp(-x\widetilde G^{n})$ into $\exp(x\widetilde G^{n})$.
+So in this diagonal case the congruence holds on a strictly larger domain than
+$F(0)=G(0)=1$. This enlarges the diagonal case only; we make no claim about the domain of
+\Cref{thm:main} for general shift-stable $A,M$.
+
+Condition \eqref{eq:prodone} is, however, \emph{necessary and not sufficient}: the
+evenness above is not a convenience of the proof but a real constraint. Take
+\[
+  F=-1+x,\qquad G=-1,
+\]
+so that $F_0G_0=1$ while $-F=1-x$ carries an odd term. Then $b$ begins
+\[
+  1,\;2,\;-1,\;34,\;-15,\;1546,\;\dots
+\]
+and $b(4)-b(1)=-15-2=-17\not\equiv0\pmod 3$, so \eqref{eq:scp} fails at $n=1$, $k=3$.
+The correct statement is therefore: $F_0=G_0=1$ is sufficient (\Cref{thm:main});
+\eqref{eq:prodone} is necessary; and on the branch $F_0=G_0=-1$ sufficiency holds for the
+even subfamily above but not in general.
+
+Finally, \eqref{eq:prodone} is a statement about the diagonal slice only. The argument
+used $A(p)=p$ and $M(p)=p$; for $A=\mathrm{id}$, $M\equiv1$ it goes through unchanged and
+gives the same condition, but for $A\equiv0$ it does not. There the $i=0$ term gives
+$b(0)=W(0)$ and $b(p)\equiv W(0)G_0^{\,p^{2}}\equiv W(0)G_0 \pmod p$, so \eqref{eq:scp}
+forces $W(0)\big(G_0-1\big)=0$; for $W(0)\ne0$ this says $G_0=1$ and leaves $F$ entirely
+unconstrained --- consistent with \Cref{cor:A361281}, where $F$ is arbitrary. The
+condition on the constant terms is thus a property of the exponent slice, not of the
+theorem as a whole.
 
 \section{Relation to previous work}\label{sec:prior}
 
@@ -416,6 +463,14 @@ $\lcm(1,\dots,j)\mid\alpha_j$ for all $j$; the sufficient condition $j!\mid\alph
 closure of the class under sum, product and composition are also theirs. Related
 characterizations over $\Z$ appear in work of Pin and Silva~\cite{pinsilva2011}.
 
+The same identification applies to the exponent functions themselves: \Cref{def:ss} says
+precisely that a shift-stable $A\colon\N\to\N$ has integral difference ratios. So
+\Cref{thm:main} can be read as a closure statement --- the property is transported from
+the exponents $A,M$ to the sequence $b$ --- and \Cref{lem:ssclosure} is then a special case
+of the closure of that class under sum and product, which is~\cite{cgg2015}. We use the
+name \emph{shift-stable} only because it is the property of the exponents that the proof
+consumes; the underlying notion is not new.
+
 It is worth stating plainly why this does not settle the present question. Applying the
 criterion of~\cite{cgg2015} to a specific $f$ requires computing its Newton coefficients
 $\alpha_j=\sum_{i}(-1)^{j-i}\binom{j}{i}f(i)$ and exhibiting the divisibility. For the
@@ -426,9 +481,62 @@ integer coefficients; the closure properties of~\cite{cgg2015} are for finitely 
 fixed operations and do not apply directly. The two literatures appear to have developed
 independently: a full-text search of the OEIS returns no occurrence of ``integral
 difference ratio'', and~\cite{cgg2015} mentions neither generating functions nor the OEIS.
-We regard the identification of the two as a useful byproduct of this work, and note that
-the criterion of~\cite{cgg2015} already answers, in the abstract, the question left open
-in~\cite{bala2017}, though \Cref{thm:main} answers it with a concrete family.
+We regard the identification of the two as a useful byproduct of this work. It should be
+said that~\cite{cgg2015} does not by itself answer the question left open
+in~\cite{bala2017}: it characterizes the ambient class of sequences with integral
+difference ratios, but makes no comparison between that class and Bala's subclass of
+sequences whose exponential generating function factors as \eqref{eq:bala2017}. Settling
+Bala's question requires exhibiting a sequence in the former that is not in the latter,
+which is what \Cref{prop:A293013outside} below does.
+
+\subsection{The new families are not of Bala's 2017 form}\label{sec:notbala}
+
+\Cref{thm:main} answers the closing question of~\cite{bala2017} only if the sequences it
+produces are genuinely outside \eqref{eq:bala2017}. That is easy to certify, by a
+denominator obstruction on the logarithmic derivative.
+
+\begin{lemma}\label{lem:obstruction}
+Let $b$ be an integer sequence with $b(0)=1$ and let
+$B(x)=\sum_{n\ge0}b(n)x^{n}/n!\in\Q[[x]]$. If $B=\widehat F\exp(x\widehat G)$ for some
+$\widehat F,\widehat G\in\Z[[x]]$, then $B'/B\in\Z[[x]]$.
+\end{lemma}
+
+\begin{proof}
+Evaluating at $x=0$ gives $\widehat F(0)=B(0)=b(0)=1$, so $\widehat F$ is a unit in
+$\Z[[x]]$ and $\widehat F'/\widehat F\in\Z[[x]]$. Taking logarithmic derivatives of the
+product,
+\[
+  \frac{B'}{B}=\frac{\widehat F'}{\widehat F}+\big(x\widehat G\big)'
+             =\frac{\widehat F'}{\widehat F}+\widehat G+x\widehat G',
+\]
+and each of the three summands lies in $\Z[[x]]$.
+\end{proof}
+
+\begin{proposition}\label{prop:A293013outside}
+The sequence \oeis{A293013}, $b(n)=n!\coeff{n}\exp\big(x/(1-x)^{n}\big)$, satisfies
+\eqref{eq:scp} but its exponential generating function is not of the form
+\eqref{eq:bala2017}.
+\end{proposition}
+
+\begin{proof}
+The congruence is \Cref{thm:main} with $W=F=1$, $G=1/(1-x)$, $A\equiv0$, $M=\mathrm{id}$.
+For the second claim, $b$ begins $1,1,5,55,961,24101,818821,\dots$, and an exact
+computation of the logarithmic derivative of $B=\sum b(n)x^{n}/n!$ gives
+\[
+  \frac{B'}{B}=1+4x+21x^{2}+120x^{3}+755x^{4}+5215x^{5}+\tfrac{117271}{3}x^{6}+\cdots,
+\]
+whose coefficient of $x^{6}$ is not an integer. By \Cref{lem:obstruction}, $B$ admits no
+representation $\widehat F\exp(x\widehat G)$ with $\widehat F,\widehat G\in\Z[[x]]$.
+\end{proof}
+
+The same test applies to \oeis{A361036}, whose logarithmic derivative already fails
+integrality at $x^{4}$, with $\coeff{4}(B'/B)=2777/2$. It does \emph{not} fire for every
+instance: for \oeis{A278070} itself ($F=1/(1-x)$, $G=1$, $A=\mathrm{id}$, $M\equiv1$) the
+series $B'/B$ is integral as far as we computed, so that sequence may well be of Bala's
+form. The claim we need, and the only one we make, is that the family of
+\Cref{thm:main} \emph{contains} sequences outside \eqref{eq:bala2017}. Note also that the
+obstruction is one-way: $B'/B\in\Z[[x]]$ is necessary for Bala's form, not sufficient,
+which is all that is needed here.
 
 \subsection{Prior partial results}
 
@@ -436,35 +544,113 @@ Bala's theorem~\eqref{eq:bala2017} is \Cref{thm:main} with constant exponents. H
 proceeds by an induction driven by the recurrence obtained from
 $\mathcal{A}'=\mathcal{A}\cdot(G+xG')$, whose coefficients do not depend on the index; that
 argument does not extend to $n$-dependent exponents, since no single such recurrence
-exists. The base case does survive: $b(k)\equiv1\pmod k$ follows from
-\eqref{eq:closed} because $k\mid \ff{k}{i}$ for $i<k$ and the $i=k$ term contributes
-$\coeff{0}=1$.
+exists. The base case does survive, in the following form. In \eqref{eq:closed} with
+$n=k$, every term with $1\le i\le k$ carries the factor $k$, since
+$\ff{k}{i}=k(k-1)\cdots(k-i+1)$; the surviving term is $i=0$, which contributes
+$\coeff{0}\big(W F^{A(k)}G^{M(k)k}\big)=W(0)$ because $F(0)=G(0)=1$. As $b(0)=W(0)$ too,
+this gives $b(k)\equiv b(0)=W(0) \pmod k$, which is \eqref{eq:scp} at $n=0$. In Bala's
+setting $W=1$ it reads $b(k)\equiv1\pmod k$.
 
 The single sequence \oeis{A278070} was proved to satisfy \eqref{eq:scp} in May 2026 by an
 autonomous formal proof-search agent~\cite{adamczewski2026}, by a modular argument on its
 closed hypergeometric sum. Several further conjectures of Bala on individual sequences
 have been settled recently by similar means; see for instance~\cite{kallat2026}.
 
-\section{A generalization that fails}\label{sec:fails}
+\section{Coefficients in a localization of \texorpdfstring{$\Z$}{Z}}\label{sec:fails}
 
 It is tempting to relax the hypothesis $G\in\Z[[x]]$. Consider \oeis{A000085}, the number
 of involutions, with $\sum a(n)x^n/n!=\exp(x+x^{2}/2)$. Here
 $x+x^{2}/2=x\big(1+x/2\big)$, so $G=1+x/2\notin\Z[[x]]$ and \Cref{thm:main} does not
-apply. The OEIS entry records the property only for \emph{odd} $k$, and indeed the
-unrestricted congruence fails: $a(0)=1$, $a(2)=2$, so $a(2)-a(0)\not\equiv0\pmod2$.
+apply. Its OEIS entry records $a(n+k)\equiv a(n)\pmod k$ for all \emph{odd} $k$, and
+indeed the unrestricted congruence fails: $a(0)=1$, $a(2)=2$, so
+$a(2)-a(0)\not\equiv0\pmod2$.
 
-Since the single denominator $2$ is exactly the modulus that fails, one might conjecture
-that $G\in\Z[1/D][[x]]$ yields \eqref{eq:scp} for all $k$ coprime to $D$. This is
-\emph{false}. For $G=1+x/2$ the congruence does hold for all odd $k$ we tested
-($k\le13$), but for $G=1+x/3$ it fails even for $k$ coprime to $3$ --- for example at
-$k=2$. So the behaviour of \oeis{A000085} is not an instance of a denominator principle;
-it is better explained by the multiplicative congruence
-$a(n+k)\equiv a(n)a(k)\pmod k$ that its entry also records, which belongs to a different
-family. We record this because the generalization is an attractive guess.
+The hypothesis $G\in\Z[[x]]$ can in fact be dropped almost entirely. Nothing in
+\Cref{sec:proof} uses properties of $\Z$ beyond the ability to multiply an integer by a
+coefficient: \Cref{lem:tools} is a statement about integers only, \Cref{lem:newton} is the
+binomial theorem in $R[[x]]$ for a natural exponent, and each of the three telescoped
+terms \eqref{eq:t1}--\eqref{eq:t3} is an integer multiple of $k$ times a coefficient of a
+power series. Recording this costs nothing.
+
+\begin{proposition}\label{prop:ring}
+Let $R$ be a commutative ring, let $W,F,G\in R[[x]]$ with $F(0)=G(0)=1$, and let
+$A,M\colon\N\to\N$ be shift-stable. Put
+\[
+  B(n)\;=\;\sum_{i=0}^{n}\ff{n}{i}\,\coeff{i}\!\left(W\,F^{A(n)}G^{M(n)(n-i)}\right)\;\in R .
+\]
+Then $B(n+k)-B(n)\in kR$ for all $n\ge0$ and $k\ge1$.
+\end{proposition}
+
+\begin{proof}
+Verbatim \Cref{sec:proof}, with $\Z$ replaced by $R$. Every divisibility invoked there ---
+\Cref{lem:tools}\ref{it:poly}, \ref{it:divis}, \ref{it:key} and \ref{it:edge} --- is an
+assertion about integers, and in each of \eqref{eq:t1}, \eqref{eq:t2} and \eqref{eq:t3}
+that integer multiple of $k$ is multiplied by an element of $R$. \Cref{lem:newton} holds
+in $R[[x]]$ because $a$ is a natural number and $P(0)=0$.
+\end{proof}
+
+Note that \Cref{prop:ring} is stated for the finite sum, not for the exponential. This is
+the only real subtlety: for $R=\Z[1/D]$ the series $\exp(xG^{M(n)})$ does \emph{not} lie in
+$R[[x]]$, since the denominators $j!$ involve primes not dividing $D$. It must be read in
+$\Q[[x]]$, and the membership $B(n)\in R$ then comes from the closed form rather than from
+the exponential. With that said, the localized statement follows.
+
+\begin{corollary}\label{cor:localized}
+Let $D\ge2$ and let $W,F,G\in\Z[1/D][[x]]$ with $F(0)=G(0)=1$, and let $A,M$ be
+shift-stable. Define $b(n)=n!\coeff{n}\big(WF^{A(n)}\exp(xG^{M(n)})\big)$, computed in
+$\Q[[x]]$. Then $b(n)\in\Z[1/D]$ and
+\[
+  b(n+k)-b(n)\in k\,\Z[1/D]\qquad\text{for all }n\ge0,\ k\ge1 .
+\]
+\end{corollary}
+
+\begin{proof}
+\Cref{prop:closed} is an identity in $\Q$, so $b(n)$ equals the sum $B(n)$ of
+\Cref{prop:ring} with $R=\Z[1/D]$; apply that proposition. No coprimality between $k$ and
+$D$ is needed.
+\end{proof}
+
+\begin{corollary}\label{cor:descent}
+In the situation of \Cref{cor:localized}, suppose in addition that $b(n)\in\Z$ for all $n$.
+Then $b(n+k)\equiv b(n)\pmod k$ in $\Z$ for every $k$ coprime to $D$.
+\end{corollary}
+
+\begin{proof}
+Write $b(n+k)-b(n)=k\,y$ with $y\in\Z[1/D]$, say $y=a/D^{m}$ with $a\in\Z$. Then
+$\big(b(n+k)-b(n)\big)D^{m}=ka$, so $k$ divides $\big(b(n+k)-b(n)\big)D^{m}$; since
+$\gcd(k,D)=1$ this forces $k\mid b(n+k)-b(n)$.
+\end{proof}
+
+Applying this to \oeis{A000085} --- $W=F=1$, $G=1+x/2$, $M\equiv1$, $D=2$ --- gives
+$a(n+k)\equiv a(n)\pmod k$ for every odd $k$, which is exactly the congruence its OEIS
+entry records. We stress that this \emph{recovers} a recorded observation and settles
+nothing that was open; its interest is that a sequence outside the hypotheses of
+\Cref{thm:main} is nevertheless explained by the same argument.
+
+Two remarks on the boundary of \Cref{cor:descent}. The coprimality hypothesis there is
+necessary and not an artefact: $a(2)-a(0)=1$ for \oeis{A000085} is not divisible by $2$,
+and $2\mid D$. And for $G=1+x/3$ the values leave $\Z$ altogether --- $b(2)=5/3$ --- so
+\eqref{eq:scp} is not literally an integer congruence there; the $k=2$ instance, which a
+naive integer reading appears to break, is divisible in $\Z[1/3]$, since $b(2)-b(0)=2/3$
+and $(2/3)/2=1/3$. An earlier version of this paper presented that instance as a
+counterexample to the localized congruence. It is not one, and \Cref{cor:localized} shows
+no counterexample exists.
+
+Consistently with that, a search over $D\in\{2,3,4,5,6,8,9,10,12\}$, with $F$ and $G$ drawn
+from $\Z[1/D][[x]]$ and the exponent pairs of \Cref{thm:main}, found no failure of
+$b(n+k)-b(n)\in k\,\Z[1/D]$ among $7128$ pairs $(n,k)$ with $n+k\le11$, including pairs
+with $\gcd(k,D)>1$.
+
+\Cref{prop:ring} and its corollaries are proved by hand and checked numerically; unlike
+\Cref{thm:main} they are not part of the Lean development. Formalizing them is the obvious
+next step, and the obstacle is not mathematical: the Lean statement of \Cref{prop:closed}
+is tied to $\Z$ through its integrality bookkeeping, so a ring-level refactor of that layer
+is required first.
 
 \section{Formal verification}\label{sec:lean}
 
-The argument above has been formalized in Lean~4 against Mathlib; the source is available
+The main theorem and its four OEIS corollaries have been formalized in Lean~4 against
+Mathlib; the source is available
 at \url{https://github.com/turazashvili/shift-stable-exponents}. The formalization is stated in terms of Mathlib's
 \texttt{PowerSeries.exp} and \texttt{PowerSeries.subst}, so that the object proved about
 is literally
@@ -478,7 +664,7 @@ rather than a combinatorial reformulation. The chain consists of:
   \item \texttt{coeff\_one\_add\_pow\_mul}: \Cref{lem:newton};
   \item \texttt{ShiftStable} with closure lemmas: \Cref{def:ss}, \Cref{lem:ssclosure};
   \item \texttt{Bint\_shift}: \eqref{eq:blockwise} summed;
-  \item \texttt{bala\_congruence}: \Cref{thm:main}; and the named corollaries
+  \item \texttt{bala\_congruence}: \Cref{thm:main}; and the named corollaries\newline
         \texttt{bala\_congruence\_A361036},
         \texttt{bala\_congruence\_A278070},
         \texttt{bala\_congruence\_A361281} and
@@ -491,15 +677,22 @@ and in particular no \texttt{sorryAx}.
 As a guard against misformalization we checked, by an independent computation in exact
 integer arithmetic, that the formalized closed form reproduces the stored OEIS terms of
 \oeis{A278070}, \oeis{A293013}, \oeis{A361281} and \oeis{A361036}. Independent numerical
-work also verified \eqref{eq:scp} over $460{,}812$ pairs $(n,k)$ with $n+k\le140$ across
-structured and randomized choices of $(W,F,G,A,M)$, with no exception, and confirmed the
-sharpness statements of \Cref{sec:sharp}.
+work also verified \eqref{eq:scp} over $646{,}400$ pairs $(n,k)$ with $n+k\le100$, across
+$128$ combinations of structured and randomized choices of $(W,F,G,A,M)$, with no
+exception, and confirmed the sharpness statements of \Cref{sec:sharp}. Each figure quoted
+in this paper is printed by a script in the \texttt{verification/} directory of the
+repository; the sweep above is \texttt{sweep\_congruence.py} and the localization probe of
+\Cref{sec:fails} is \texttt{probe\_localization.py}.
 
 \section*{Acknowledgements}
 
 The conjectures proved here are due to Peter Bala, who recorded them in the OEIS; this
 paper contributes only their proof. We thank the OEIS and its editors for maintaining the
-record that made the problem findable.
+record that made the problem findable. We are grateful to two readers who reviewed an
+earlier draft of this paper and of its repository, and who identified an incorrect
+sharpness claim --- that $F(0)G(0)=1$ was not merely necessary but sufficient --- together
+with the erroneous counterexample discussed in \Cref{sec:fails}; both have been corrected
+here.
 
 \begin{thebibliography}{9}
 
@@ -534,7 +727,8 @@ in \emph{Proc. CPP 2020}, ACM, 2020, pp. 367--381.
 \bibitem{pinsilva2011}
 J.-É.~Pin and P.~V.~Silva,
 \emph{A noncommutative extension of Mahler's theorem on interpolation series},
-Internat. J. Algebra Comput. \textbf{21} (2011), 295--314.
+European J. Combin. \textbf{36} (2014), 564--578.
+\href{https://doi.org/10.1016/j.ejc.2013.09.009}{doi:10.1016/j.ejc.2013.09.009}.
 
 \bibitem{oeis}
 OEIS Foundation Inc.,

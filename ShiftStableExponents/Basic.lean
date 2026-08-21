@@ -1,7 +1,7 @@
 /-
 END-TO-END verification of Peter Bala's 2023 congruence conjecture.
 
-This file closes the one gap left by `BalaCongruence.lean`: it formalizes the
+This file formalizes the
 generating-function bridge, so that the final theorem is stated directly about
 
     bala F G n = n ! * [xⁿ] ( Fⁿ * exp (x * Gⁿ) )
@@ -15,7 +15,7 @@ STRUCTURE
   §1  `bala` defined literally from `PowerSeries.exp` and `PowerSeries.subst`.
   §2  BRIDGE: `bala = Bint`, an explicit integer sum. (The former gap.)
   §3  Newton expansion of `coeff i (F^A * G^B)` into binomials in `A` and `B`.
-  §4  The arithmetic core (as in `BalaCongruence.lean`, hypotheses relaxed).
+  §4  The arithmetic core.
   §5  END-TO-END: `bala` is an integer and satisfies the congruence.
 
 No `sorry`.
@@ -150,7 +150,7 @@ theorem bala_eq_Bint (W F G : ℤ⟦X⟧) (A M : ℕ → ℕ) (n : ℕ) :
           simp only [toQ, ← map_pow, ← map_mul, coeff_map]
           simp
 
-/-! ## §3  Arithmetic helpers (as in `BalaCongruence.lean`) -/
+/-! ## §3  Arithmetic helpers -/
 
 /-- Falling factorial over `ℤ`. -/
 def ff (x : ℤ) (i : ℕ) : ℤ := ∏ t ∈ range i, (x - (t : ℤ))

@@ -5,7 +5,10 @@ organized by how much effort each level costs. **Level 3 is the one that matters
 where a machine, not a human, checks the mathematics.
 
 If you only do one thing: do Level 0 (two minutes), because it is the only place where
-human judgement is irreducible. Everything downstream of it is verified by Lean's kernel.
+human judgement is irreducible. The main theorem and its four OEIS corollaries downstream of
+it are verified by Lean's kernel. The sharpness analysis (§6 of the paper), the non-Bala-form
+proposition (§7.3) and the localization results (§8) are human proofs supported by the
+Python checks in `verification/`; they are not in the Lean development.
 
 ---
 
@@ -15,7 +18,7 @@ human judgement is irreducible. Everything downstream of it is verified by Lean'
 > let $A,M:\mathbb{N}\to\mathbb{N}$ be *shift-stable* — meaning $k \mid A(m+k)-A(m)$ for
 > all $m,k$. Then
 > $$b(n) = n!\,[x^n]\big(W(x)\,F(x)^{A(n)}\exp(x\,G(x)^{M(n)})\big)$$
-> is an integer and $b(n+k)\equiv b(n) \pmod k$ for all $n,k\ge1$.
+> is an integer and $b(n+k)\equiv b(n) \pmod k$ for all $n\ge0$, $k\ge1$.
 
 This resolves conjectures of Peter Bala on OEIS A361036, A361281, A293013 and the general
 conjecture on A278070. The statements are his; this repository contributes the proof.
@@ -81,16 +84,22 @@ STEP 5 - TERMWISE shift-stability of eq (*) (the heart of the proof)
   termwise X'Y'Z' == XYZ mod k    tested 46200   violations: 0
 ```
 
-`check_sharpness.py` establishes the *correct* necessary condition on constant terms. It
-should report that `F = G = -1` satisfies the congruence, and that a scan of
-$(F_0,G_0)\in[-3,3]^2$ finds it holding at exactly the two points with $F_0G_0=1$.
+`check_sharpness.py` establishes the *correct* condition on constant terms. In the
+diagonal slice $W=1$, $A=M=\mathrm{id}$ it should report that $F=G=-1$ satisfies the
+congruence, that a scan of $(F_0,G_0)\in[-3,3]^2$ finds it holding at exactly the two
+points with $F_0G_0=1$, and — importantly — that $F_0G_0=1$ is **not sufficient**: its
+`E1(c)` control block exhibits product-one pairs with an *odd* term that fail.
 
-> **Note on an error we made.** An earlier version of this repository claimed
-> $F(0)=G(0)=1$ was *necessary*. That was false, found by adversarial review. The truth is
-> $F(0)G(0)=1$, and the $(-1,-1)$ branch is a nonempty infinite family. The flawed test
-> block inside `verify_proof.py` has been left in place and clearly labelled as flawed
-> rather than deleted, so you can see what it actually measured. See
-> `docs/RESEARCH-LOG.md`.
+> **Note on two errors we made.** An earlier version of this repository claimed
+> $F(0)=G(0)=1$ was *necessary*. That was false, found by adversarial review; $F_0G_0=1$
+> is the necessary condition in that slice, and the $(-1,-1)$ branch is a nonempty
+> infinite family. A later version then over-corrected, claiming $F(0)G(0)=1$ could simply
+> *replace* $F(0)=G(0)=1$ — i.e. that it was sufficient. That is also false: sufficiency
+> on the $(-1,-1)$ branch needs $-F$ and $-G$ to be **even**, and fails as soon as an odd
+> term appears ($F=-1+x$, $G=-1$ gives $b(4)-b(1)=-17\not\equiv0 \bmod 3$). The flawed
+> test block inside `verify_proof.py` has been left in place and clearly labelled as
+> flawed rather than deleted, so you can see what it actually measured. See
+> `docs/RESEARCH-LOG.md` and Section 6.2 of the paper.
 
 ---
 
@@ -204,10 +213,11 @@ kind of check quickly in Python with the transcriptions in
 `verification/check_faithful.py`.
 
 **4c. Hunt for a counterexample to the theorem itself.** Use exact integers, never floats.
-Independent adversarial review searched 460,812 pairs $(n,k)$ with $n+k\le140$ across
-structured and random $(W,F,G,A,M)$, with three separate implementations including a
-computer-algebra system, and found none. Beating that search is the cleanest possible
-refutation.
+`python3 verification/sweep_congruence.py 100 8` searches 646,400 pairs $(n,k)$ with
+$n+k\le100$ across
+128 combinations of structured and random $(W,F,G,A,M)$ and finds none; it prints the exact
+count, so you can confirm the figure rather than take it on trust. Beating that search is
+the cleanest possible refutation.
 
 **4d. Check the corollaries really instantiate the OEIS statements.** Read
 `bala_congruence_A361281` in the source and confirm that the unconstrained prefactor `W`

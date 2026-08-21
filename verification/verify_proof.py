@@ -33,7 +33,7 @@ Step 4 (three divisibility lemmas).
        In particular r! | (n)_i and s! | (n)_i when r+s <= i.
   (L3) If N' == N (mod k) then m!*(C(N',m) - C(N,m)) = (N')_m - (N)_m == 0 (mod k).
        NOTE: the gcd corollary "(k/gcd(k,m!)) | C(N',m)-C(N,m)" is checked below for
-       historical reasons but is NOT what was formalized; BalaCongruence.lean uses the
+       historical reasons but is NOT what was formalized; the Lean development uses the
        division-free form: m! | (n)_i, so (n)_i*(C(N',m)-C(N,m)) = u*((N')_m - (N)_m).
 
 Step 5 (telescoping). With X=(n)_i, Y=C(A,r), Z=C(B,s):
@@ -160,6 +160,19 @@ def rand_F(deg, rng, const1=True):
                      + [rng.randint(-5, 5) for _ in range(6)], deg)
 
 
+# --- regression tracking -------------------------------------------------
+# Checks recorded here MUST hold. main() exits non-zero if any of them fails,
+# so CI detects a mathematical regression and not merely a crash.
+REGRESSIONS = []
+
+
+def must(label, ok):
+    """Record a check that is required to hold."""
+    if not ok:
+        REGRESSIONS.append(label)
+    return ok
+
+
 def main():
     rng = random.Random(20260820)
     DEG = 26
@@ -180,6 +193,7 @@ def main():
         print(f"  trial {t}: F={F[:4]} G={G[:4]}")
         print(f"      direct  {d0[:6]}")
         print(f"      step1 agrees: {a1}   step2 (eq *) agrees: {a2}")
+        must(f"closed form agrees (trial {t})", a1 and a2)
     print(f"\n  expansions valid: {ok12}")
 
     print()
@@ -194,6 +208,7 @@ def main():
                 if (falling(n + k, i) - falling(n, i)) % k != 0:
                     bad += 1
     print(f"  (L1) (n+k)_i == (n)_i mod k                       violations: {bad}")
+    must("L1 (n+k)_i == (n)_i mod k", bad == 0)
 
     # (L2) m! | (n)_i for m <= i
     bad = 0
@@ -203,6 +218,7 @@ def main():
                 if falling(n, i) % factorial(m) != 0:
                     bad += 1
     print(f"  (L2) m! | (n)_i for m <= i                        violations: {bad}")
+    must("L2 m! | (n)_i", bad == 0)
 
     # (L3) N'==N mod k  =>  (k/gcd(k,m!)) | C(N',m)-C(N,m)
     bad = 0
@@ -215,6 +231,7 @@ def main():
                     if (comb(Np, m) - comb(N, m)) % (k // d) != 0:
                         bad += 1
     print(f"  (L3) (k/gcd(k,m!)) | C(N',m)-C(N,m)               violations: {bad}")
+    must("L3 binomial difference", bad == 0)
 
     # (L2)+(L3) combined: r! | (n)_i and product is a multiple of k
     bad = 0
@@ -228,6 +245,7 @@ def main():
                     if lhs % k != 0:
                         bad += 1
     print(f"  (L2)x(L3) => k | (n)_i*(C(N',m)-C(N,m))           violations: {bad}")
+    must("L2xL3 key divisibility", bad == 0)
 
     print()
     print("=" * 80)
@@ -240,6 +258,7 @@ def main():
                 if falling(n + k, i) % k != 0:
                     bad += 1
     print(f"  k | (n+k)_i for all n < i <= n+k                  violations: {bad}")
+    must("edge case k | (n+k)_i", bad == 0)
 
     print()
     print("=" * 80)
@@ -262,6 +281,7 @@ def main():
                             if bad <= 3:
                                 print(f"      VIOLATION k={k} i={i} r={r} s={s} n={n}")
     print(f"  termwise X'Y'Z' == XYZ mod k    tested {tested}   violations: {bad}")
+    must("termwise shift-stability (heart of the proof)", bad == 0)
 
     print()
     print("=" * 80)
@@ -282,6 +302,8 @@ def main():
                 if (a[n + k] - a[n]) % k != 0]
         print(f"  {label}")
         print(f"      matches OEIS terms: {okhead}   congruence violations: {len(viol)}")
+        must(f"{label}: matches OEIS terms", okhead)
+        must(f"{label}: congruence holds", len(viol) == 0)
 
     nbad = 0
     for t in range(10):
@@ -325,3 +347,13 @@ def main():
 
 if __name__ == "__main__":
     main()
+    if REGRESSIONS:
+        print()
+        print("=" * 78)
+        print(f"REGRESSION: {len(REGRESSIONS)} required check(s) FAILED")
+        for r in REGRESSIONS:
+            print(f"  - {r}")
+        print("=" * 78)
+        raise SystemExit(1)
+    print()
+    print("All required checks passed.")

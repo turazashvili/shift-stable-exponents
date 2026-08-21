@@ -9,10 +9,11 @@ authors:
     given-names: "Nikoloz"
 abstract: >-
   A Lean 4 / Mathlib formalization of a congruence theorem for sequences
-  b(n) = n! [x^n] (F(x)^A(n) exp(x G(x)^M(n))) with F(0) = G(0) = 1 and
-  shift-stable exponent functions A, M. The theorem resolves conjectures of
-  Peter Bala on OEIS sequences A361036, A361281, A293013 and the general
-  conjecture on A278070, and subsumes Bala's 2017 theorem.
+  b(n) = n! [x^n] (W(x) F(x)^A(n) exp(x G(x)^M(n))) with F(0) = G(0) = 1, an
+  unconstrained prefactor W, and shift-stable exponent functions A, M. The
+  theorem resolves conjectures of Peter Bala on OEIS sequences A361036,
+  A361281, A293013 and the general conjecture on A278070, and subsumes Bala's
+  2017 theorem.
 keywords:
   - number theory
   - integer sequences

@@ -3,7 +3,7 @@
 A machine-checked proof, in **Lean 4 + Mathlib**, of a family of congruences for
 sequences defined by exponential generating functions of the form
 
-$$b(n) \;=\; n!\,[x^n]\Big(F(x)^{A(n)}\exp\big(x\,G(x)^{M(n)}\big)\Big).$$
+$$b(n) \;=\; n!\,[x^n]\Big(W(x)\,F(x)^{A(n)}\exp\big(x\,G(x)^{M(n)}\big)\Big).$$
 
 The main theorem resolves four conjectures of **Peter Bala** recorded in the
 [OEIS](https://oeis.org) in March 2023, on two independent axes, and subsumes his 2017
@@ -13,15 +13,19 @@ theorem as the case of constant exponents.
 
 ## The result
 
-> **Theorem.** Let $F,G\in\mathbb{Z}[[x]]$ with $F(0)=G(0)=1$, and let
-> $A,M:\mathbb{N}\to\mathbb{N}$ be *shift-stable*, meaning
+> **Theorem.** Let $W,F,G\in\mathbb{Z}[[x]]$ with $F(0)=G(0)=1$ (*no condition on*
+> $W$), and let $A,M:\mathbb{N}\to\mathbb{N}$ be *shift-stable*, meaning
 > $A(m+k)\equiv A(m) \pmod{k}$ for all $m,k$ (every polynomial with
 > natural-number coefficients qualifies). Put
-> $$b(n)=n!\,[x^n]\big(F(x)^{A(n)}\exp(x\,G(x)^{M(n)})\big).$$
-> Then $b(n)\in\mathbb{Z}$ and $b(n+k)\equiv b(n)\pmod{k}$ for all $n,k\ge 1$.
+> $$b(n)=n!\,[x^n]\big(W(x)\,F(x)^{A(n)}\exp(x\,G(x)^{M(n)})\big).$$
+> Then $b(n)\in\mathbb{Z}$ and $b(n+k)\equiv b(n)\pmod{k}$ for all $n\ge 0$, $k\ge 1$.
 
 Equivalently: for every $k$, the sequence $b \bmod k$ is purely periodic with period
 dividing $k$.
+
+The unconstrained prefactor $W$ is what makes the A361281 axis and Bala's 2017 theorem
+instances of a single statement; it is present in the Lean theorem
+(`bala_congruence`).
 
 ### Cases covered
 
@@ -45,7 +49,7 @@ shift-stable.
 Expanding $\exp(xG^M)=\sum_j x^jG^{Mj}/j!$ and reindexing $i=n-j$ gives the finite
 closed form
 
-$$b(n)=\sum_{i\ge 0}(n)_i\,[x^i]\Big(F^{A(n)}G^{M(n)(n-i)}\Big),\qquad (n)_i=\frac{n!}{(n-i)!}.$$
+$$b(n)=\sum_{i\ge 0}(n)_i\,[x^i]\Big(W\,F^{A(n)}G^{M(n)(n-i)}\Big),\qquad (n)_i=\frac{n!}{(n-i)!}.$$
 
 Writing $F=1+P$, $G=1+Q$ with $P(0)=Q(0)=0$, the Newton expansion
 $[x^i]\big((1+P)^{A}Z\big)=\sum_{r\le i}[x^i](P^rZ)\binom{A}{r}$ turns each block into
@@ -128,7 +132,7 @@ To build the paper:
 cd paper && pdflatex paper.tex && pdflatex paper.tex
 ```
 
-`test/Axioms.lean` should print, for each of the six main theorems, exactly
+`test/Axioms.lean` should print, for each of the nine theorems it audits, exactly
 
 ```
 [propext, Classical.choice, Quot.sound]
@@ -144,23 +148,51 @@ The `verification/` scripts are independent of the Lean development and use exac
 integer/rational arithmetic throughout (never floating point).
 
 ```bash
-python3 verification/verify_proof.py        # each proof step, incl. 46,200 termwise cases
-python3 verification/check_faithful.py      # Lean's definitions vs. the real OEIS terms
-python3 verification/test_unified.py        # the unified statement across 8 exponent pairs
-python3 verification/check_sharpness.py     # the necessary condition on F(0), G(0)
+python3 verification/verify_proof.py         # each proof step, incl. 46,200 termwise cases
+python3 verification/check_faithful.py       # Lean's definitions vs. the real OEIS terms
+python3 verification/test_unified.py         # the unified statement across 8 exponent pairs
+python3 verification/sweep_congruence.py 100 8   # hostile (n,k) sweep -> the 646,400 figure
+python3 verification/check_sharpness.py      # what the constant terms must satisfy
+python3 verification/check_paper_claims.py   # every numeric example quoted in the paper
+python3 verification/check_not_bala_form.py  # A293013 is outside Bala's 2017 form
+python3 verification/probe_localization.py   # the Z[1/D] localization (Section 8)
 ```
 
 Summary of what they establish:
 
-* the closed form agrees with the definition of $b$ on all tested $(F,G,A,M)$;
+* the closed form agrees with the definition of $b$ on all tested $(W,F,G,A,M)$;
 * the Lean definitions reproduce the stored OEIS terms of A278070, A293013, A361281 and
   A361036 to nine terms each;
-* the congruence holds in 200/200 randomized trials and in a hostile search over
-  460,812 $(n,k)$ pairs up to $n+k\le 140$;
-* shift-stability of the exponents is **necessary**: non-polynomial exponents such as
-  $2^n$ and $n!$ fail in 6/6 trials;
-* the hypothesis $F(0)=G(0)=1$ can be weakened to $F(0)G(0)=1$ (see
-  `docs/FINDINGS.md`), and beyond that the congruence fails.
+* the congruence holds in 200/200 randomized trials (`test_unified.py`), on 46,200
+  termwise cases of the central identity (`verify_proof.py`), and over **646,400**
+  $(n,k)$ pairs with $n+k\le 100$ across 128 combinations of $(W,F,G,A,M)$
+  (`sweep_congruence.py`), with no exception;
+* shift-stability of the exponents **cannot be dropped** from a uniform theorem:
+  with $F=1+x$, exponents such as $A(n)=2^n$ and $A(n)=n!$ produce violations. It is
+  not *necessary* in every instance — if $F=1$ the factor $F^{A(n)}$ is trivial and
+  any $A$ whatsoever works;
+* the constant terms cannot be relaxed freely. In the diagonal slice $W=1$,
+  $A=M=\mathrm{id}$, the condition $F(0)G(0)=1$ is **necessary but not sufficient**:
+  it also holds for $F(0)=G(0)=-1$, where the congruence survives when $-F$ and $-G$
+  are *even* series. Evenness is a real constraint, not a convenience: in every case with
+  an odd term that we tested (625 scanned) the congruence failed, e.g. $F=-1+x$, $G=-1$
+  gives $b(4)-b(1)=-17\not\equiv0\bmod 3$. We have not proved that *every* odd term
+  forces failure. `check_sharpness.py`
+  exhibits both the surviving family and the failures;
+* the family really does contain sequences outside Bala's 2017 form: for A293013 the
+  logarithmic derivative $B'/B$ has $[x^6]=117271/3\notin\mathbb{Z}$, which is impossible
+  for $\widehat F\exp(x\widehat G)$ with $\widehat F,\widehat G\in\mathbb{Z}[[x]]$
+  (`check_not_bala_form.py`). The same test fires for A361036 at $[x^4]=2777/2$; it does
+  *not* fire for A278070, which may itself be of Bala's form;
+* the hypothesis $G\in\mathbb{Z}[[x]]$ can be dropped: the same proof runs over any
+  commutative ring, so for $G\in\mathbb{Z}[1/D][[x]]$ one gets
+  $b(n+k)-b(n)\in k\,\mathbb{Z}[1/D]$ for *every* $k$, and hence the ordinary congruence
+  for every $k$ coprime to $D$ when $b$ is integral. This recovers the odd-$k$ congruence
+  recorded on A000085 (`probe_localization.py`). These supplementary results are proved by
+  hand, not in Lean;
+
+Every figure quoted above is printed by the script named next to it. No number in this
+README or in the paper is quoted unless a script in `verification/` produces it.
 
 ---
 

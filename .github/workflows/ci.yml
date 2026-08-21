@@ -45,6 +45,14 @@ jobs:
         run: |
           python3 verification/verify_proof.py
           python3 verification/check_sharpness.py
+          python3 verification/check_paper_claims.py
+          python3 verification/check_not_bala_form.py
+          python3 verification/probe_localization.py
+          python3 verification/test_unified.py
+      - name: Hostile (n,k) sweep
+        # A reduced bound, to keep CI fast. The 646,400-pair figure quoted in the
+        # paper and README is produced by:  sweep_congruence.py 100 8
+        run: python3 verification/sweep_congruence.py 60 6
 
   faithfulness:
     runs-on: ubuntu-latest

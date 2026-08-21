@@ -228,11 +228,18 @@ subtraction, and finds:
 - the formally proved congruence holds on the real sequences (324 cases, 0 violations)
 
 Plus, from `verify_proof.py`: the heart of the proof, termwise shift-stability,
-tested on **46,200** cases with 0 violations. Independent hostile review reports
-**460,812** `(n,k)` pairs with 0 violations (to `n+k ≤ 140`), confirms the hypotheses
+tested on **46,200** cases with 0 violations. Independent hostile review reported
+`(n,k)` sweeps with 0 violations, confirms the hypotheses
 are load-bearing (dropping `r ≤ i` produces 2637 counterexamples to `term_shift`),
 and — a stronger faithfulness check than mine — made **Lean itself `#eval` its own
 `T`/`B`**, matching the OEIS `%S/%T/%U` bytes verbatim for all three sequences.
+
+> **CORRECTION (later).** This entry originally reported that review had searched
+> **460,812** `(n,k)` pairs to `n+k ≤ 140`. No script in this repository ever performed
+> that sweep, and the figure was not reproducible; it should never have been quoted here
+> or in the paper. It has been replaced everywhere by the output of
+> `verification/sweep_congruence.py`, which searches **646,400** pairs to `n+k ≤ 100`
+> across 128 parameter combinations and prints the count it actually achieved.
 
 ### CORRECTION: my sharpness claim was wrong
 
